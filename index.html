@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVO Beauty Space | Премиальное бьюти-пространство и врачебная косметология в Нячанге</title>
+  <meta name="description" content="EVO Beauty Space в Нячанге. Все бьюти-услуги в одном месте. Врачи с высшим мед. образованием, безопасный доказательный подход, гарантия на все услуги.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="header">
+    <div class="container header-inner">
+      <!-- Brand Logo -->
+      <a href="index.html" class="logo-wrap" title="EVO Beauty Space">
+        <img src="assets/logo.png" alt="EVO Beauty Space" class="brand-logo-img">
+      </a>
+
+      <!-- Desktop Menu -->
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#about" class="nav-link">О пространстве</a></li>
+          <li><a href="#services" class="nav-link">Услуги и цены</a></li>
+          <li><a href="#team" class="nav-link">Врачи и стилисты</a></li>
+          <li><a href="#contacts" class="nav-link">Контакты</a></li>
+        </ul>
+      </nav>
+
+      <!-- Action Group -->
+      <div class="header-actions">
+        <a href="tel:+84901234567" class="btn-admin-pill" style="border-color: var(--color-border); color: var(--color-text-main);">
+          <span>📞</span> +84 90 123 45 67
+        </a>
+        <button class="btn btn-primary" onclick="window.bookingEngine.open()">
+          Записаться онлайн
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="about">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-tagline">
+          <span>📍 Нячанг • Премиум бьюти-пространство</span>
+        </div>
+        <h1 class="hero-title">
+          Безупречная эстетика и <em>доказательная</em> медицина
+        </h1>
+        <p class="hero-desc">
+          Все бьюти-услуги в одном роскошном пространстве в Нячанге. Инъекционная и аппаратная косметология от врачей с высшим медицинским образованием, сложное окрашивание волос, подология и SPA.
+        </p>
+
+        <div class="hero-highlights">
+          <div class="highlight-item">
+            <span class="highlight-icon">✓</span>
+            <span>Врачи с высшим мед. образованием</span>
+          </div>
+          <div class="highlight-item">
+            <span class="highlight-icon">✓</span>
+            <span>Безопасный доказательный протокол</span>
+          </div>
+          <div class="highlight-item">
+            <span class="highlight-icon">✓</span>
+            <span>Мировые бренды: Davines, Lebel, Profhilo</span>
+          </div>
+          <div class="highlight-item">
+            <span class="highlight-icon">✓</span>
+            <span>Гарантия качества на все услуги</span>
+          </div>
+        </div>
+
+        <div class="hero-cta-group">
+          <button class="btn btn-gold" data-action="book-general" style="padding: 16px 36px; font-size: 14px;">
+            Записаться на процедуру ✨
+          </button>
+          <a href="#services" class="btn btn-outline" style="padding: 16px 28px; font-size: 14px;">
+            Смотреть меню услуг ▾
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-card-main">
+          <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=80" alt="EVO Beauty Space Interior">
+        </div>
+        <div class="hero-badge-float" onclick="const tab = document.querySelector('[data-cat=med-cosmetology]'); if(tab) tab.click(); document.getElementById('services').scrollIntoView({behavior: 'smooth'});" style="cursor: pointer;" title="Смотреть процедуры врачебной косметологии">
+          <div class="badge-float-avatar-wrap">
+            <svg class="badge-float-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="7" r="4" stroke="#C29B78" stroke-width="1.8" />
+              <path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2" stroke="#C29B78" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M12 11v3.5M10.25 12.75h3.5" stroke="#C29B78" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <span class="badge-status-dot" title="Приём открыт"></span>
+          </div>
+          <div class="badge-float-text">
+            <h5>Врачебная косметология</h5>
+            <p>Запись к дерматологу открыта</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Catalog Section -->
+  <section class="catalog-section" id="services">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-sub">Прейскурант услуг EVO</div>
+        <h2 class="section-title">Каталог процедур и стоимость</h2>
+        <p class="section-desc">Выберите категорию или воспользуйтесь поиском по препаратам и названиям процедур</p>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="filter-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="serviceSearchInput" class="search-input" placeholder="Поиск процедуры, бренда (напр. Profhilo, Стрижка, Педикюр)...">
+        </div>
+
+        <!-- Horizontal Category Pills -->
+        <div class="category-tabs" id="categoryTabs">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Live Services Grid -->
+      <div class="services-grid" id="servicesGrid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Team / Specialists Section -->
+  <section class="team-section" id="team">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-sub">Команда экспертов EVO</div>
+        <h2 class="section-title">Профессионалы своего дела</h2>
+        <p class="section-desc">Дипломированные врачи, топ-стилисты и сертифицированные подологи с многолетним клиническим стажем</p>
+      </div>
+
+      <div class="specialists-grid" id="specialistsGrid">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Online Booking Modal Dialog -->
+  <div class="modal-overlay" id="bookingModalOverlay">
+    <div class="booking-modal">
+      <button class="modal-close" id="bookingModalClose" aria-label="Закрыть">✕</button>
+
+      <!-- Steps Indicator -->
+      <div class="booking-steps-bar">
+        <div class="step-indicator active">
+          <div class="step-dot">1</div>
+          <span class="step-label">Услуга</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">2</div>
+          <span class="step-label">Специалист</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">3</div>
+          <span class="step-label">Время</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">4</div>
+          <span class="step-label">Контакты</span>
+        </div>
+      </div>
+
+      <!-- Step Content Dynamic Area -->
+      <div id="bookingStepsContent">
+        <!-- Injected dynamically via booking.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" id="contacts">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="assets/logo.png" alt="EVO Beauty Space" style="height: 54px; width: auto; margin-bottom: 18px; filter: drop-shadow(0 0 1px rgba(255,255,255,0.6));">
+          <p class="footer-desc">
+            Премиальное пространство красоты, заботы и эстетической медицины в Нячанге. Безопасность, стерильность и индивидуальный подход к каждому гостю.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Локации и контакты</h5>
+          
+          <div class="footer-branch-item">
+            <a href="https://maps.app.goo.gl/AYJSN5MHKQJqHgV26" target="_blank" rel="noopener noreferrer" class="footer-address-link" title="Открыть филиал EVO Sever на Google Картах">
+              <span class="branch-name">EVO Sever:</span>
+              <span class="branch-address">40 Đ. Bắc Sơn, Nha Trang, Khánh Hòa 650000, Вьетнам ↗</span>
+            </a>
+          </div>
+
+          <div class="footer-branch-item">
+            <a href="https://maps.app.goo.gl/GeMZXYFnTMcveymM9" target="_blank" rel="noopener noreferrer" class="footer-address-link" title="Открыть филиал EVO Beauty Space на Google Картах">
+              <span class="branch-name">EVO Beauty Space:</span>
+              <span class="branch-address">94 Hùng Vương, Nha Trang, Khánh Hòa 650000, Вьетнам ↗</span>
+            </a>
+          </div>
+
+          <ul class="footer-links" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <li class="footer-link">📞 <a href="tel:+84901234567" style="color: inherit; text-decoration: none;">+84 90 123 45 67</a></li>
+            <li class="footer-link">⏰ Ежедневно с 09:00 до 21:00</li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Направления</h5>
+          <ul class="footer-links">
+            <li><a href="#services" class="footer-link">Врачебная косметология</a></li>
+            <li><a href="#services" class="footer-link">Сложное окрашивание волос</a></li>
+            <li><a href="#services" class="footer-link">Медицинская подология</a></li>
+            <li><a href="#services" class="footer-link">Лазерная эпиляция</a></li>
+            <li><a href="#services" class="footer-link">Ногтевой сервис в 4 руки</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Онлайн-запись</h5>
+          <p style="font-size: 13px; color: #A3ACA2; margin-bottom: 16px;">
+            Быстрая запись на процедуру прямо на сайте:
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn btn-gold" onclick="window.bookingEngine.open()" style="width: 100%;">
+              Записаться сейчас ✨
+            </button>
+            <a href="https://t.me/polinaleskk" target="_blank" class="btn btn-outline" style="border-color: #556253; color: #E8E2D5; width: 100%;">
+              Написать в Telegram ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 EVO Beauty Space (Nha Trang). Все права защищены.</div>
+        <div style="display: flex; gap: 20px;">
+          <a href="https://instagram.com/evo.vn" target="_blank" style="color: var(--color-accent-gold);">Instagram @evo.vn</a>
+          <a href="https://t.me/AIONTravelBot/app?startapp=ref_COX2XQLL" target="_blank" style="color: #A3ACA2;">Разработано при поддержке AION</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/booking.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
