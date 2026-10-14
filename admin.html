@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVO Space CRM | Панель управления салоном и записями</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body class="admin-body">
+
+  <!-- PIN Protection Overlay -->
+  <div id="pinLockScreen" style="position: fixed; inset: 0; z-index: 9999; background: #141A14; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #1F271F; border: 1px solid #2D3A2D; border-radius: 20px; padding: 40px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+      <div style="font-size: 36px; margin-bottom: 12px;">🔒</div>
+      <h2 class="font-serif" style="color: #FFFFFF; font-size: 22px; margin-bottom: 8px;">EVO Space Admin</h2>
+      <p style="color: #8E9C8D; font-size: 13px; margin-bottom: 24px;">Введите PIN-код доступа к панели управления салоном</p>
+      
+      <form id="pinAuthForm">
+        <input type="password" id="pinInput" maxlength="6" placeholder="••••" style="width: 100%; text-align: center; font-size: 28px; letter-spacing: 0.3em; padding: 12px; border-radius: 12px; border: 1px solid #3D4F3D; background: #141A14; color: #FFFFFF; outline: none; margin-bottom: 16px;">
+        <div id="pinErrorMsg" style="color: #EF4444; font-size: 12px; margin-bottom: 12px; display: none;">Неверный PIN-код</div>
+        <button type="submit" class="btn btn-gold" style="width: 100%; padding: 14px; font-size: 13px;">Войти в систему</button>
+      </form>
+      <div style="font-size: 11px; color: #5B6B5A; margin-top: 16px;">По умолчанию: 1234</div>
+    </div>
+  </div>
+
+  <div class="admin-layout" id="adminMainLayout" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div>
+        <div style="margin-bottom: 28px;">
+          <img src="assets/logo.png" alt="EVO Beauty Space" style="height: 52px; width: auto; object-fit: contain; filter: drop-shadow(0 0 1px rgba(255,255,255,0.6));">
+        </div>
+
+        <nav>
+          <a href="#" class="admin-nav-item active" data-tab="appointments">
+            <span>📅</span> Журнал записей
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="services">
+            <span>🏷️</span> Услуги и цены
+          </a>
+          <a href="index.html" target="_blank" class="admin-nav-item" style="color: var(--color-accent-gold); margin-top: 20px;">
+            <span>↗</span> Открыть сайт салона
+          </a>
+        </nav>
+      </div>
+
+      <div style="font-size: 11px; color: #7D887C; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <div>EVO Space Admin v2.4</div>
+        <div style="margin-top: 4px;">Нячанг, Вьетнам</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Top Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+        <div>
+          <h1 class="font-serif" style="font-size: 28px; font-weight: 600;">Панель управления салоном</h1>
+          <p class="text-muted" style="font-size: 13px;">Контроль записей клиентов, управление прейскурантом и ценами в реальном времени</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button id="openAddServiceBtn" class="btn btn-gold" style="padding: 10px 20px; font-size: 12px;">
+            + Добавить услугу
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="admin-stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Записей на сегодня</div>
+          <div class="stat-value" id="kpiTodayCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Новые онлайн-заявки</div>
+          <div class="stat-value" id="kpiNewCount" style="color: #D97706;">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Ожидаемая выручка</div>
+          <div class="stat-value" id="kpiRevenue" style="color: var(--color-primary);">0 ₫</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Всего услуг в базе</div>
+          <div class="stat-value" id="kpiServicesCount">0</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: APPOINTMENTS -->
+      <section class="admin-tab-section" id="tab-appointments">
+        <div class="admin-table-card">
+          <div class="admin-table-head">
+            <h3 class="font-serif" style="font-size: 20px;">Входящие бронирования</h3>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline app-filter-btn btn-primary" data-filter="all" style="padding: 6px 14px; font-size: 11px;">Все</button>
+              <button class="btn btn-outline app-filter-btn" data-filter="new" style="padding: 6px 14px; font-size: 11px;">Новые</button>
+              <button class="btn btn-outline app-filter-btn" data-filter="confirmed" style="padding: 6px 14px; font-size: 11px;">Подтвержденные</button>
+              <button class="btn btn-outline app-filter-btn" data-filter="in_progress" style="padding: 6px 14px; font-size: 11px;">В процессе</button>
+              <button class="btn btn-outline app-filter-btn" data-filter="completed" style="padding: 6px 14px; font-size: 11px;">Завершенные</button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Бронь</th>
+                  <th>Клиент</th>
+                  <th>Процедура & Мастер</th>
+                  <th>Дата & Время</th>
+                  <th>Сумма</th>
+                  <th>Статус</th>
+                  <th>Действие</th>
+                </tr>
+              </thead>
+              <tbody id="appointmentsTbody">
+                <!-- Injected via admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: SERVICES & PRICES -->
+      <section class="admin-tab-section" id="tab-services" style="display: none;">
+        <div class="admin-table-card">
+          <div class="admin-table-head">
+            <div>
+              <h3 class="font-serif" style="font-size: 20px;">Управление прейскурантом и ценами</h3>
+              <p class="text-muted" style="font-size: 12px; margin-top: 2px;">Изменяйте стоимость процедур — новые цены сразу сохраняются и отображаются на сайте для клиентов</p>
+            </div>
+            
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <input type="text" id="adminServiceSearch" class="form-input" placeholder="Поиск по названию..." style="width: 220px; padding: 8px 12px; font-size: 12px;">
+              <select id="adminServiceCatFilter" class="form-select" style="width: 200px; padding: 8px 12px; font-size: 12px;">
+                <option value="all">Все категории</option>
+                <option value="cosmetology">Врачебная косметология</option>
+                <option value="aesthetic">Эстетические & Аппаратные</option>
+                <option value="hair">Парикмахерские услуги</option>
+                <option value="barber">Барбер-зал</option>
+                <option value="laser">Лазерная эпиляция</option>
+                <option value="nails">Ногтевой сервис</option>
+                <option value="podology">Подология</option>
+                <option value="lashes-brows">Ресницы и брови</option>
+                <option value="permanent">Перманент и тату</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Название процедуры</th>
+                  <th>Категория</th>
+                  <th>Длительность</th>
+                  <th>Стоимость (VND)</th>
+                  <th>Действие</th>
+                </tr>
+              </thead>
+              <tbody id="servicesTbody">
+                <!-- Injected via admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal: Add New Service -->
+  <div class="modal-overlay" id="addServiceModal" style="display: none;">
+    <div class="booking-modal" style="max-width: 540px;">
+      <button class="modal-close" id="closeAddServiceBtn">✕</button>
+      <h3 class="font-serif" style="font-size: 24px; margin-bottom: 8px;">Добавить новую услугу</h3>
+      <p class="text-muted" style="font-size: 13px; margin-bottom: 24px;">Новая процедура моментально появится на сайте в соответствующем разделе</p>
+
+      <form id="addServiceForm">
+        <div class="booking-form-group">
+          <label class="form-label">Название услуги *</label>
+          <input type="text" id="newServiceName" class="form-input" placeholder="Например: Пилинг BioRePeel для шеи" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Категория *</label>
+            <select id="newServiceCategory" class="form-select" required>
+              <option value="cosmetology">Врачебная косметология</option>
+              <option value="aesthetic">Эстетические и аппаратные</option>
+              <option value="hair">Парикмахерские услуги</option>
+              <option value="barber">Барбер-зал</option>
+              <option value="laser">Лазерная эпиляция</option>
+              <option value="nails">Ногтевой сервис</option>
+              <option value="podology">Подология</option>
+              <option value="lashes-brows">Ресницы и брови</option>
+              <option value="permanent">Перманент и тату</option>
+            </select>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Подкатегория (Аккордеон) *</label>
+            <select id="newServiceSubcategorySelect" class="form-select" required>
+              <!-- Populated dynamically via admin.js -->
+            </select>
+            <div id="customSubcategoryWrap" style="display: none; margin-top: 8px;">
+              <input type="text" id="newServiceCustomSubcategory" class="form-input" placeholder="Введите название новой подкатегории...">
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Цена (₫) *</label>
+            <input type="number" id="newServicePrice" class="form-input" placeholder="2000000" required>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Длительность *</label>
+            <input type="text" id="newServiceDuration" class="form-input" placeholder="1 ч." required>
+          </div>
+        </div>
+
+        <div class="booking-form-group">
+          <label class="form-label">Описание процедуры</label>
+          <textarea id="newServiceDesc" class="form-textarea" rows="2" placeholder="Краткий протокол, состав, кому подходит..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-gold" style="width: 100%; padding: 14px; font-size: 13px; margin-top: 10px;">
+          Сохранить и опубликовать в каталоге
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Existing Service -->
+  <div class="modal-overlay" id="editServiceModal" style="display: none;">
+    <div class="booking-modal" style="max-width: 540px;">
+      <button class="modal-close" id="closeEditServiceBtn">✕</button>
+      <h3 class="font-serif" style="font-size: 24px; margin-bottom: 8px;">Редактировать услугу</h3>
+      <p class="text-muted" style="font-size: 13px; margin-bottom: 24px;">Изменения моментально обновятся на сайте и в прейскуранте</p>
+
+      <form id="editServiceForm">
+        <input type="hidden" id="editServiceId">
+
+        <div class="booking-form-group">
+          <label class="form-label">Название услуги *</label>
+          <input type="text" id="editServiceName" class="form-input" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Категория *</label>
+            <select id="editServiceCategory" class="form-select" required>
+              <option value="cosmetology">Врачебная косметология</option>
+              <option value="aesthetic">Эстетические и аппаратные</option>
+              <option value="hair">Парикмахерские услуги</option>
+              <option value="barber">Барбер-зал</option>
+              <option value="laser">Лазерная эпиляция</option>
+              <option value="nails">Ногтевой сервис</option>
+              <option value="podology">Подология</option>
+              <option value="lashes-brows">Ресницы и брови</option>
+              <option value="permanent">Перманент и тату</option>
+            </select>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Подкатегория *</label>
+            <input type="text" id="editServiceSubcategory" class="form-input" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Цена (₫) *</label>
+            <input type="number" id="editServicePrice" class="form-input" required>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Длительность *</label>
+            <input type="text" id="editServiceDuration" class="form-input" required>
+          </div>
+        </div>
+
+        <div class="booking-form-group">
+          <label class="form-label">Описание процедуры</label>
+          <textarea id="editServiceDesc" class="form-textarea" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-gold" style="width: 100%; padding: 14px; font-size: 13px; margin-top: 10px;">
+          Сохранить изменения ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
