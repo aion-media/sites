@@ -392,12 +392,26 @@ class EvoDataStore {
     if (!localStorage.getItem(this.STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(this.STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
     }
-    if (!localStorage.getItem(this.STORAGE_KEYS.APPOINTMENTS)) {
+    // Check if appointments exist and have valid structure with branch
+    try {
+      const storedApps = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.APPOINTMENTS));
+      if (!storedApps || !storedApps.length || !storedApps[0].branch) {
+        localStorage.setItem(this.STORAGE_KEYS.APPOINTMENTS, JSON.stringify(DEFAULT_APPOINTMENTS));
+      }
+    } catch (e) {
       localStorage.setItem(this.STORAGE_KEYS.APPOINTMENTS, JSON.stringify(DEFAULT_APPOINTMENTS));
     }
-    if (!localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS)) {
+
+    // Check if specialists exist and have valid branch
+    try {
+      const storedSpecs = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS));
+      if (!storedSpecs || !storedSpecs.length || !storedSpecs[0].branch) {
+        localStorage.setItem(this.STORAGE_KEYS.SPECIALISTS, JSON.stringify(DEFAULT_SPECIALISTS));
+      }
+    } catch (e) {
       localStorage.setItem(this.STORAGE_KEYS.SPECIALISTS, JSON.stringify(DEFAULT_SPECIALISTS));
     }
+
     if (!localStorage.getItem(this.STORAGE_KEYS.SALON)) {
       localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(DEFAULT_SALON_INFO));
     }
