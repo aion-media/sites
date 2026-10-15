@@ -933,6 +933,31 @@ class SalonDataService {
     return false;
   }
 
+  updateAppointment(id, updatedFields) {
+    const appointments = this.getAppointments();
+    const idx = appointments.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      appointments[idx] = {
+        ...appointments[idx],
+        ...updatedFields
+      };
+      this.saveAppointments(appointments);
+      return appointments[idx];
+    }
+    return null;
+  }
+
+  deleteAppointment(id) {
+    let appointments = this.getAppointments();
+    const initialLen = appointments.length;
+    appointments = appointments.filter(a => a.id !== id);
+    if (appointments.length !== initialLen) {
+      this.saveAppointments(appointments);
+      return true;
+    }
+    return false;
+  }
+
   updateAppointmentStatus(id, newStatus) {
     const appointments = this.getAppointments();
     const item = appointments.find(a => a.id === id);

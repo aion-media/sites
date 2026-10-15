@@ -381,9 +381,14 @@ function renderTimeline() {
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; gap: 6px;">
               <span style="font-size: 10px; color: #FDE68A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${app.suggestedSpecialistName ? 'Рек: ' + app.suggestedSpecialistName : 'Любой мастер'}</span>
-              <button type="button" class="btn btn-primary" onclick="openAssignMasterModal('${app.id}')" style="padding: 3px 8px; font-size: 10px; border-radius: 4px; background: #F59E0B; color: #000; font-weight: 700; white-space: nowrap;">
-                ⚡ Назначить
-              </button>
+              <div style="display: flex; gap: 4px;">
+                <button type="button" class="btn btn-primary" onclick="openAssignMasterModal('${app.id}')" style="padding: 3px 8px; font-size: 10px; border-radius: 4px; background: #F59E0B; color: #000; font-weight: 700; white-space: nowrap;">
+                  ⚡ Назначить
+                </button>
+                <button type="button" class="btn btn-outline" onclick="openEditAppointmentModal('${app.id}')" style="padding: 3px 8px; font-size: 10px; border-radius: 4px; border-color: rgba(255,255,255,0.3); color: #FFF; white-space: nowrap;" title="Редактировать запись">
+                  ✏️ Изменить
+                </button>
+              </div>
             </div>
           </td>
         `;
@@ -458,6 +463,12 @@ function renderTimeline() {
                 ${app.variantName}
               </div>
             ` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.08);">
+              <span style="font-size: 11px; color: #10B981; font-family: var(--font-mono); font-weight: 700;">${window.hdData.formatMoney(app.price)}</span>
+              <button type="button" class="btn btn-outline" onclick="openEditAppointmentModal('${app.id}')" style="padding: 2px 8px; font-size: 10px; border-color: rgba(255,255,255,0.25); background: rgba(0,0,0,0.3); color: #FFFFFF;" title="Редактировать запись">
+                ✏️ Изменить
+              </button>
+            </div>
           </td>
         `;
 
@@ -538,6 +549,222 @@ window.openAssignMasterModal = function(appId) {
       showAdminToast("Мастер назначен!", `Запись #${app.id} успешно передана мастеру ${chosenSpec.name}`);
     }
   };
+};
+
+// --- 1.4 РЕДАКТИРОВАНИЕ ЗАПИСИ (ИЗ РАСПИСАНИЯ ИЛИ ЖУРНАЛА) ---
+window.openEditAppointmentModal = function(appId) {
+  const apps = window.hdData.getAppointments();
+  const app = apps.find(a => a.id === appId);
+  if (!app) return;
+
+  const modal = document.getElementById('adminEditAppointmentModal');
+  if (!modal) return;
+
+  const form = document.getElementById('adminEditAppointmentForm');
+  const titleEl = document.getElementById('editAppModalTitle');
+  const subtitleEl = document.getElementById('editAppSubtitle');
+  const idInput = document.getElementById('editAppId');
+  const nameInput = document.getElementById('editAppClientName');
+  const phoneInput = document.getElementById('editAppPhone');
+  const serviceSelect = document.getElementById('editAppServiceSelect');
+  const variantSelect = document.getElementById('editAppVariantSelect');
+  const specSelect = document.getElementById('editAppSpecialistSelect');
+  const statusSelect = document.getElementById('editAppStatusSelect');
+  const dateInput = document.getElementById('editAppDate');
+  const timeSelect = document.getElementById('editAppTime');
+  const durSelect = document.getElementById('editAppDuration');
+  const priceInput = document.getElementById('editAppPrice');
+  const commentInput = document.getElementById('editAppComment');
+  const deleteBtn = document.getElementById('deleteAppBtn');
+  const cancelBtn = document.getElementById('cancelEditAppBtn');
+  const closeBtn = document.getElementById('closeEditAppointmentModal');
+
+  // Заполняем ID и заголовки
+  idInput.value = app.id;
+  titleEl.textContent = `✏️ Редактирование записи #${app.id}`;
+  const createdDateStr = app.createdAt ? new Date(app.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  subtitleEl.textContent = `Клиент: ${app.clientName} ${createdDateStr ? '• Создана: ' + createdDateStr : ''}`;
+
+  nameInput.value = app.clientName || '';
+  phoneInput.value = app.phone || '';
+
+  // Заполняем список услуг с группировкой по категориям
+  const services = window.hdData.getServices();
+  const categories = window.hdData.getCategories();
+
+  let srvOptionsHtml = '';
+  categories.forEach(cat => {
+    const catServices = services.filter(s => s.categoryId === cat.id);
+    if (catServices.length > 0) {
+      srvOptionsHtml += `<optgroup label="${cat.icon} ${cat.name}">`;
+      catServices.forEach(s => {
+        const isSel = (s.id === app.serviceId || s.name === app.serviceName);
+        srvOptionsHtml += `<option value="${s.id}" ${isSel ? 'selected' : ''}>${s.name}</option>`;
+      });
+      srvOptionsHtml += `</optgroup>`;
+    }
+  });
+
+  serviceSelect.innerHTML = srvOptionsHtml;
+  if (!serviceSelect.value && app.serviceName) {
+    serviceSelect.innerHTML = `<option value="custom" selected>${app.serviceName}</option>` + serviceSelect.innerHTML;
+  }
+
+  // Функция для динамического обновления списка вариантов длины / стоимости
+  function updateVariantsList(srvId, chosenVariantName) {
+    const srv = services.find(s => s.id === srvId);
+    if (srv && srv.priceVariants && srv.priceVariants.length > 0) {
+      variantSelect.disabled = false;
+      variantSelect.innerHTML = srv.priceVariants.map(v => `
+        <option value="${v.name}" data-price="${v.price}" ${v.name === chosenVariantName ? 'selected' : ''}>
+          ${v.name} (${window.hdData.formatMoney(v.price)})
+        </option>
+      `).join('');
+      if (!variantSelect.value) {
+        variantSelect.selectedIndex = 0;
+      }
+    } else {
+      variantSelect.innerHTML = `<option value="Стандарт">Стандартная процедура</option>`;
+      variantSelect.disabled = true;
+    }
+  }
+
+  updateVariantsList(serviceSelect.value, app.variantName);
+
+  // Обработчик смены услуги
+  serviceSelect.onchange = () => {
+    const srv = services.find(s => s.id === serviceSelect.value);
+    updateVariantsList(serviceSelect.value, null);
+    if (srv) {
+      if (srv.duration) durSelect.value = String(srv.duration);
+      if (srv.priceVariants && srv.priceVariants.length > 0) {
+        const activeOpt = variantSelect.options[variantSelect.selectedIndex];
+        if (activeOpt && activeOpt.dataset.price) {
+          priceInput.value = activeOpt.dataset.price;
+        }
+      } else if (srv.price) {
+        priceInput.value = srv.price;
+      }
+    }
+  };
+
+  // Обработчик смены варианта
+  variantSelect.onchange = () => {
+    const activeOpt = variantSelect.options[variantSelect.selectedIndex];
+    if (activeOpt && activeOpt.dataset.price) {
+      priceInput.value = activeOpt.dataset.price;
+    }
+  };
+
+  // Специалисты
+  const specialists = window.hdData.getSpecialists();
+  let specOptionsHtml = `
+    <option value="any" ${(!app.specialistId || app.specialistId === 'any' || app.specialistName === 'Любой свободный мастер') ? 'selected' : ''}>
+      ⚡ Любой свободный мастер (онлайн-очередь)
+    </option>
+  `;
+  specialists.forEach(sp => {
+    const isSel = (sp.id === app.specialistId || (app.specialistName && app.specialistName.includes(sp.name)));
+    specOptionsHtml += `<option value="${sp.id}" ${isSel ? 'selected' : ''}>${sp.name} — ${sp.role.split(',')[0]}</option>`;
+  });
+  specSelect.innerHTML = specOptionsHtml;
+
+  // Статус
+  statusSelect.value = app.status || 'new';
+
+  // Дата
+  dateInput.value = app.date || ((window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA'));
+
+  // Время
+  let hasTime = false;
+  for (let opt of timeSelect.options) {
+    if (opt.value === app.time) {
+      hasTime = true;
+      break;
+    }
+  }
+  if (!hasTime && app.time) {
+    const newOpt = document.createElement('option');
+    newOpt.value = app.time;
+    newOpt.textContent = app.time;
+    timeSelect.appendChild(newOpt);
+  }
+  timeSelect.value = app.time || '10:00';
+
+  // Длительность
+  const durVal = String(app.duration || 60);
+  let hasDur = false;
+  for (let opt of durSelect.options) {
+    if (opt.value === durVal) {
+      hasDur = true;
+      break;
+    }
+  }
+  if (!hasDur && app.duration) {
+    const newOpt = document.createElement('option');
+    newOpt.value = durVal;
+    newOpt.textContent = `${durVal} мин`;
+    durSelect.appendChild(newOpt);
+  }
+  durSelect.value = durVal;
+
+  // Стоимость и комментарий
+  priceInput.value = app.price || 0;
+  commentInput.value = app.comment || '';
+
+  // Закрытие модального окна
+  const closeModal = () => modal.classList.remove('active');
+  closeBtn.onclick = closeModal;
+  cancelBtn.onclick = closeModal;
+  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  // Удаление записи
+  deleteBtn.onclick = () => {
+    if (confirm(`Вы действительно хотите безвозвратно удалить запись #${app.id} клиента ${app.clientName}?`)) {
+      window.hdData.deleteAppointment(app.id);
+      closeModal();
+      updateKPIs();
+      renderTimeline();
+      renderJournal();
+      showAdminToast("Запись удалена", `Запись #${app.id} клиента ${app.clientName} удалена из расписания`);
+    }
+  };
+
+  // Сохранение изменений
+  form.onsubmit = (e) => {
+    e.preventDefault();
+
+    const chosenSrvId = serviceSelect.value;
+    const srv = services.find(s => s.id === chosenSrvId);
+    const chosenSpecId = specSelect.value;
+    const spec = specialists.find(s => s.id === chosenSpecId);
+
+    const updatedFields = {
+      clientName: nameInput.value.trim(),
+      phone: phoneInput.value.trim(),
+      serviceId: chosenSrvId,
+      serviceName: srv ? srv.name : (app.serviceName || 'Услуга студии'),
+      variantName: variantSelect.disabled ? 'Стандарт' : variantSelect.value,
+      specialistId: chosenSpecId,
+      specialistName: spec ? spec.name : (chosenSpecId === 'any' ? 'Любой свободный мастер' : app.specialistName),
+      status: statusSelect.value,
+      date: dateInput.value,
+      time: timeSelect.value,
+      duration: parseInt(durSelect.value, 10) || 60,
+      price: parseInt(priceInput.value, 10) || 0,
+      comment: commentInput.value.trim()
+    };
+
+    window.hdData.updateAppointment(app.id, updatedFields);
+    closeModal();
+
+    updateKPIs();
+    renderTimeline();
+    renderJournal();
+    showAdminToast("Запись обновлена ✨", `Изменения для клиента ${updatedFields.clientName} успешно сохранены`);
+  };
+
+  modal.classList.add('active');
 };
 
 // --- 2. МАСТЕРА И ГРАФИК РАБОТЫ (НЕДЕЛЬНОЕ РАСПИСАНИЕ) ---
@@ -703,7 +930,10 @@ function renderJournal() {
         </td>
         <td>${statusBadge}</td>
         <td>
-          <div style="display: flex; gap: 6px;">
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button class="btn btn-outline" onclick="openEditAppointmentModal('${a.id}')" style="padding: 4px 8px; font-size: 11px; border-color: rgba(255,255,255,0.3); color: #FFFFFF;" title="Редактировать запись">
+              ✏️ Изменить
+            </button>
             ${a.status === 'new' ? `
               <button class="btn btn-outline" onclick="changeStatus('${a.id}', 'confirmed')" style="padding: 4px 8px; font-size: 11px;">
                 Подтвердить

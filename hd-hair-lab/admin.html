@@ -439,11 +439,135 @@
     </div>
   </div>
 
+  <!-- MODAL: РЕДАКТИРОВАНИЕ ЗАПИСИ КЛИЕНТА (ИЗ РАСПИСАНИЯ ИЛИ ЖУРНАЛА) -->
+  <div class="modal-overlay" id="adminEditAppointmentModal">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="editAppModalTitle" style="font-size: 18px; font-weight: 700;">✏️ Редактирование записи</h3>
+          <div id="editAppSubtitle" style="font-size: 12px; color: var(--text-dim); margin-top: 2px;"></div>
+        </div>
+        <button class="modal-close-btn" id="closeEditAppointmentModal">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form id="adminEditAppointmentForm">
+          <input type="hidden" id="editAppId">
+
+          <!-- 1. Клиент -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="booking-form-group">
+              <label class="form-label">Имя клиента *</label>
+              <input type="text" id="editAppClientName" class="form-input" required>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Телефон / Мессенджер *</label>
+              <input type="text" id="editAppPhone" class="form-input" required>
+            </div>
+          </div>
+
+          <!-- 2. Услуга и вариант -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="booking-form-group">
+              <label class="form-label">Процедура / Услуга *</label>
+              <select id="editAppServiceSelect" class="form-select" required></select>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Вариант / Длина волос</label>
+              <select id="editAppVariantSelect" class="form-select"></select>
+            </div>
+          </div>
+
+          <!-- 3. Мастер и Статус -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="booking-form-group">
+              <label class="form-label">Специалист / Мастер *</label>
+              <select id="editAppSpecialistSelect" class="form-select" required></select>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Статус записи *</label>
+              <select id="editAppStatusSelect" class="form-select" required>
+                <option value="new">Новая заявка</option>
+                <option value="confirmed">Подтверждена</option>
+                <option value="completed">Выполнена</option>
+                <option value="cancelled">Отменена</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4. Дата, Время и Длительность -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr 1.2fr; gap: 14px; margin-bottom: 16px;">
+            <div class="booking-form-group">
+              <label class="form-label">Дата приёма *</label>
+              <input type="date" id="editAppDate" class="form-input" required>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Время *</label>
+              <select id="editAppTime" class="form-select" required>
+                <option value="10:00">10:00</option>
+                <option value="11:00">11:00</option>
+                <option value="12:00">12:00</option>
+                <option value="13:00">13:00</option>
+                <option value="14:00">14:00</option>
+                <option value="15:00">15:00</option>
+                <option value="16:00">16:00</option>
+                <option value="17:00">17:00</option>
+                <option value="18:00">18:00</option>
+                <option value="19:00">19:00</option>
+              </select>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Длительность *</label>
+              <select id="editAppDuration" class="form-select" required>
+                <option value="30">30 мин</option>
+                <option value="45">45 мин</option>
+                <option value="60">60 мин (1 ч)</option>
+                <option value="90">90 мин (1.5 ч)</option>
+                <option value="120">120 мин (2 ч)</option>
+                <option value="150">150 мин (2.5 ч)</option>
+                <option value="180">180 мин (3 ч)</option>
+                <option value="240">240 мин (4 ч)</option>
+                <option value="300">300 мин (5 ч)</option>
+                <option value="360">360 мин (6 ч)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 5. Стоимость и Комментарий -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 14px; margin-bottom: 20px;">
+            <div class="booking-form-group">
+              <label class="form-label">Стоимость (₫) *</label>
+              <input type="number" id="editAppPrice" class="form-input" required min="0" step="50000">
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Примечание / Комментарий</label>
+              <input type="text" id="editAppComment" class="form-input" placeholder="Пожелания, особенности...">
+            </div>
+          </div>
+
+          <!-- Кнопки действий -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap;">
+            <button type="button" id="deleteAppBtn" class="btn btn-outline" style="color: #EF4444; border-color: rgba(239, 68, 68, 0.4); padding: 10px 18px; font-size: 13px;">
+              🗑️ Удалить запись
+            </button>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" id="cancelEditAppBtn" class="btn btn-glass" style="padding: 10px 18px; font-size: 13px;">
+                Отмена
+              </button>
+              <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-size: 13px;">
+                Сохранить изменения ✨
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container for Real-time Notifications -->
   <div id="adminToastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
 
   <!-- Scripts -->
-  <script src="js/data.js?v=1.3"></script>
-  <script src="js/admin.js?v=1.3"></script>
+  <script src="js/data.js?v=1.4"></script>
+  <script src="js/admin.js?v=1.4"></script>
 </body>
 </html>
