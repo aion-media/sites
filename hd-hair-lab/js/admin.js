@@ -196,6 +196,10 @@ function setupNav() {
 
 function switchTab(tabId) {
   currentTab = tabId;
+  try {
+    history.replaceState(null, null, '#' + tabId);
+  } catch (e) {}
+
   document.querySelectorAll('.admin-nav-item[data-tab]').forEach(item => {
     item.classList.toggle('active', item.getAttribute('data-tab') === tabId);
   });
@@ -215,10 +219,12 @@ function switchTab(tabId) {
 
 function loadDashboard() {
   updateKPIs();
-  renderTimeline();
-  renderSpecialistsSchedule();
-  renderJournal();
-  renderServicesAdmin();
+  const hash = window.location.hash.replace('#', '');
+  if (['timeline', 'specialists', 'appointments', 'services'].includes(hash)) {
+    switchTab(hash);
+  } else {
+    switchTab('timeline');
+  }
 }
 
 function updateKPIs() {
