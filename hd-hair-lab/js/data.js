@@ -637,6 +637,13 @@ class SalonDataService {
     this.initData();
   }
 
+  getLocalDateString(d = new Date()) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   initData() {
     if (!localStorage.getItem(this.STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(this.STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
@@ -649,7 +656,7 @@ class SalonDataService {
     }
     if (!localStorage.getItem(this.STORAGE_KEYS.APPOINTMENTS)) {
       // Инициализируем несколькими демонстрационными записями на сегодня для шахматки
-      const today = new Date().toISOString().split('T')[0];
+      const today = this.getLocalDateString();
       const demoAppointments = [
         {
           id: "HD-101",
@@ -858,11 +865,34 @@ class SalonDataService {
 
   saveAppointments(appointments) {
     localStorage.setItem(this.STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('hd_crm_sync');
+        bc.postMessage({ type: 'APPOINTMENTS_UPDATED', timestamp: Date.now() });
+        setTimeout(() => bc.close(), 100);
+      }
+    } catch (e) {}
   }
 
   addAppointment(booking) {
     const appointments = this.getAppointments();
     const newId = "HD-" + Math.floor(100 + Math.random() * 900);
+    
+    // Если выбран "любой мастер", подбираем рекомендуемого по категории услуги
+    let suggestedId = null;
+    let suggestedName = null;
+    if (!booking.specialistId || booking.specialistId === 'any') {
+      const services = this.getServices();
+      const srv = services.find(s => s.id === booking.serviceId);
+      const catId = srv ? srv.categoryId : null;
+      const specialists = this.getSpecialists();
+      const match = specialists.find(sp => !catId || sp.categories.includes(catId));
+      if (match) {
+        suggestedId = match.id;
+        suggestedName = match.name;
+      }
+    }
+
     const newRecord = {
       id: newId,
       clientName: booking.clientName,
@@ -872,6 +902,8 @@ class SalonDataService {
       variantName: booking.variantName || "Стандарт",
       specialistId: booking.specialistId || "any",
       specialistName: booking.specialistName || "Любой свободный мастер",
+      suggestedSpecialistId: suggestedId,
+      suggestedSpecialistName: suggestedName,
       date: booking.date,
       time: booking.time,
       duration: booking.duration || 60,
@@ -884,6 +916,21 @@ class SalonDataService {
     appointments.unshift(newRecord);
     this.saveAppointments(appointments);
     return newRecord;
+  }
+
+  assignAppointmentSpecialist(appointmentId, specialistId, specialistName) {
+    const appointments = this.getAppointments();
+    const item = appointments.find(a => a.id === appointmentId);
+    if (item) {
+      item.specialistId = specialistId;
+      item.specialistName = specialistName;
+      if (item.status === 'new') {
+        item.status = 'confirmed';
+      }
+      this.saveAppointments(appointments);
+      return true;
+    }
+    return false;
   }
 
   updateAppointmentStatus(id, newStatus) {

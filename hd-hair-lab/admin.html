@@ -101,14 +101,21 @@
       </div>
 
       <!-- TAB 1: MASTER TIMELINE GRID (РАСПИСАНИЕ НА ДЕНЬ) -->
-      <section class="admin-tab-section" id="tab-timeline">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2 style="font-size: 20px;">Расписание на день</h2>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <label style="font-size: 13px; color: var(--text-muted);">Дата:</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 20px;">Расписание на день</h2>
+            <div id="timelineSelectedDateLabel" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;"></div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="timelinePrevDayBtn" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">‹ Вчера</button>
+            <button type="button" id="timelineTodayBtn" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px; font-weight: 700;">Сегодня</button>
+            <button type="button" id="timelineNextDayBtn" class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">Завтра ›</button>
             <input type="date" id="timelineDateInput" class="form-input" style="width: auto; padding: 6px 12px; font-size: 13px;">
           </div>
         </div>
+
+        <!-- Dynamic summary and cross-date alerts -->
+        <div id="timelineDatesSummary" style="margin-bottom: 16px;"></div>
 
         <div class="timeline-container">
           <table class="timeline-table">
@@ -398,8 +405,44 @@
     </div>
   </div>
 
+  <!-- MODAL: НАЗНАЧИТЬ МАСТЕРА ДЛЯ ОНЛАЙН-ЗАЯВКИ -->
+  <div class="modal-overlay" id="adminAssignMasterModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 id="assignMasterModalTitle" style="font-size: 18px; font-weight: 700;">⚡ Назначить мастера на запись</h3>
+        <button class="modal-close-btn" id="closeAssignMasterModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminAssignMasterForm">
+          <input type="hidden" id="assignAppId">
+          
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; margin-bottom: 18px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 2px;">Клиент и процедура</div>
+            <strong id="assignClientName" style="color: #FFFFFF; font-size: 16px;"></strong>
+            <div id="assignServiceName" style="font-size: 13px; color: var(--text-sub); margin-top: 2px;"></div>
+            <div id="assignDateTimeBadge" style="display: inline-block; margin-top: 8px; font-size: 12px; font-family: var(--font-mono); color: #10B981; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 4px;"></div>
+          </div>
+
+          <div class="booking-form-group">
+            <label class="form-label">Выберите мастера студии *</label>
+            <select id="assignMasterSelect" class="form-select" required style="width: 100%; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-md); color: #FFFFFF; font-size: 14px;">
+              <!-- Populated via admin.js -->
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px; margin-top: 8px;">
+            Назначить мастера в расписание ✨
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container for Real-time Notifications -->
+  <div id="adminToastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
   <!-- Scripts -->
-  <script src="js/data.js?v=1.1"></script>
-  <script src="js/admin.js?v=1.1"></script>
+  <script src="js/data.js?v=1.3"></script>
+  <script src="js/admin.js?v=1.3"></script>
 </body>
 </html>

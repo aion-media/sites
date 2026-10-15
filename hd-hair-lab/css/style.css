@@ -1028,7 +1028,8 @@ button {
   visibility: visible;
 }
 
-.booking-modal-card {
+.booking-modal-card,
+.modal-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
@@ -1043,7 +1044,8 @@ button {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-overlay.active .booking-modal-card {
+.modal-overlay.active .booking-modal-card,
+.modal-overlay.active .modal-card {
   transform: translateY(0);
 }
 

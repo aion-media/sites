@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const ADMIN_PIN = "1234";
-let currentDate = new Date().toISOString().split('T')[0];
+let currentDate = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA');
 let currentTab = 'timeline';
 let currentWeekOffset = 0; // 0 = текущая неделя, 1 = следующая неделя и т.д.
 let openCategoriesState = {};
@@ -18,6 +18,59 @@ function initAdmin() {
   setupAuth();
   setupNav();
   setupModals();
+  setupRealtimeSync();
+}
+
+function setupRealtimeSync() {
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bc = new BroadcastChannel('hd_crm_sync');
+      bc.onmessage = (e) => {
+        handleRealtimeSyncEvent(e.data);
+      };
+    }
+  } catch (err) {}
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === (window.hdData && window.hdData.STORAGE_KEYS ? window.hdData.STORAGE_KEYS.APPOINTMENTS : 'hd_hair_lab_appointments_v1')) {
+      handleRealtimeSyncEvent({ type: 'STORAGE_CHANGE' });
+    }
+  });
+}
+
+function handleRealtimeSyncEvent(data) {
+  updateKPIs();
+  if (currentTab === 'timeline') renderTimeline();
+  if (currentTab === 'appointments') renderJournal();
+  
+  const apps = window.hdData.getAppointments();
+  if (apps && apps.length > 0) {
+    const latest = apps[0];
+    showAdminToast(
+      "Новая запись с сайта!",
+      `Клиент: ${latest.clientName} • ${latest.serviceName} (${latest.date} в ${latest.time})`
+    );
+  }
+}
+
+function showAdminToast(title, message) {
+  const container = document.getElementById('adminToastContainer');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.style.cssText = "background: #182030; border: 1px solid var(--accent-emerald); color: #FFF; padding: 14px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); font-size: 13px; min-width: 280px; max-width: 380px; pointer-events: auto; display: flex; align-items: flex-start; gap: 12px; transition: all 0.3s ease;";
+  toast.innerHTML = `
+    <span style="font-size: 20px;">🔔</span>
+    <div style="flex-grow: 1;">
+      <div style="font-weight: 700; color: #FFFFFF; margin-bottom: 2px;">${title}</div>
+      <div style="color: var(--text-sub); font-size: 12px;">${message}</div>
+    </div>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+    setTimeout(() => toast.remove(), 400);
+  }, 6000);
 }
 
 function setupAuth() {
@@ -64,6 +117,38 @@ function setupNav() {
     dateInput.value = currentDate;
     dateInput.addEventListener('change', (e) => {
       currentDate = e.target.value;
+      renderTimeline();
+    });
+  }
+
+  const prevDayBtn = document.getElementById('timelinePrevDayBtn');
+  const todayBtn = document.getElementById('timelineTodayBtn');
+  const nextDayBtn = document.getElementById('timelineNextDayBtn');
+
+  if (prevDayBtn) {
+    prevDayBtn.addEventListener('click', () => {
+      const d = new Date(currentDate + "T12:00:00");
+      d.setDate(d.getDate() - 1);
+      currentDate = window.hdData.getLocalDateString(d);
+      if (dateInput) dateInput.value = currentDate;
+      renderTimeline();
+    });
+  }
+
+  if (todayBtn) {
+    todayBtn.addEventListener('click', () => {
+      currentDate = window.hdData.getLocalDateString();
+      if (dateInput) dateInput.value = currentDate;
+      renderTimeline();
+    });
+  }
+
+  if (nextDayBtn) {
+    nextDayBtn.addEventListener('click', () => {
+      const d = new Date(currentDate + "T12:00:00");
+      d.setDate(d.getDate() + 1);
+      currentDate = window.hdData.getLocalDateString(d);
+      if (dateInput) dateInput.value = currentDate;
       renderTimeline();
     });
   }
@@ -139,7 +224,7 @@ function loadDashboard() {
 function updateKPIs() {
   const appointments = window.hdData.getAppointments();
   const services = window.hdData.getServices();
-  const today = new Date().toISOString().split('T')[0];
+  const today = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA');
 
   const todayApps = appointments.filter(a => a.date === today);
   const newApps = appointments.filter(a => a.status === 'new');
@@ -168,7 +253,7 @@ function getWeekDays(offsetWeeks = 0) {
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString(d) : d.toLocaleDateString('en-CA');
     const dayFormatted = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     week.push({
       dateStr: dateStr,
@@ -186,14 +271,125 @@ function renderTimeline() {
   if (!tbody) return;
 
   const specialists = window.hdData.getSpecialists();
-  const appointments = window.hdData.getAppointments().filter(a => a.date === currentDate && a.status !== 'cancelled');
+  const allAppointments = window.hdData.getAppointments().filter(a => a.status !== 'cancelled');
+  const appointments = allAppointments.filter(a => a.date === currentDate);
   const hours = ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
 
-  const curD = new Date(currentDate);
+  const curD = new Date(currentDate + "T12:00:00");
   const dayOfWeek = curD.getDay() === 0 ? 7 : curD.getDay();
+  const todayStr = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA');
+
+  // Обновляем текстовый лейбл выбранного дня
+  const labelEl = document.getElementById('timelineSelectedDateLabel');
+  if (labelEl) {
+    const formattedCurDate = curD.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    labelEl.textContent = `${formattedCurDate.charAt(0).toUpperCase() + formattedCurDate.slice(1)} ${currentDate === todayStr ? '— (Сегодня)' : ''}`;
+  }
+
+  // Обновляем панель других дат, на которые есть записи
+  const summaryEl = document.getElementById('timelineDatesSummary');
+  if (summaryEl) {
+    const dateCounts = {};
+    allAppointments.forEach(a => {
+      if (a.date) {
+        dateCounts[a.date] = (dateCounts[a.date] || 0) + 1;
+      }
+    });
+
+    const otherDates = Object.keys(dateCounts)
+      .filter(d => d !== currentDate && dateCounts[d] > 0)
+      .sort();
+
+    let summaryHtml = `
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--bg-card); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 12px;">
+        <div style="color: var(--text-dim);">Записей на выбранный день: <strong style="color: #FFFFFF;">${appointments.length}</strong></div>
+    `;
+
+    if (otherDates.length > 0) {
+      summaryHtml += `<div style="color: var(--border-medium);">|</div><div style="color: var(--text-dim);">Записи на другие даты:</div>`;
+      otherDates.forEach(d => {
+        const dObj = new Date(d + "T12:00:00");
+        const dLabel = dObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        summaryHtml += `
+          <button type="button" onclick="selectTimelineDate('${d}')" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-medium); color: var(--text-main); padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+            📅 ${dLabel} (${dateCounts[d]}) ›
+          </button>
+        `;
+      });
+    }
+
+    summaryHtml += `</div>`;
+    summaryEl.innerHTML = summaryHtml;
+  }
 
   let html = '';
 
+  // --- 1.1 НЕРАСПРЕДЕЛЕННЫЕ ОНЛАЙН-ЗАЯВКИ (Любой свободный мастер) ---
+  const unassignedApps = appointments.filter(a => a.specialistId === 'any' || !a.specialistId || a.specialistName === 'Любой свободный мастер');
+  
+  if (unassignedApps.length > 0) {
+    html += `
+      <tr style="background: rgba(245, 158, 11, 0.08); border-bottom: 2px solid rgba(245, 158, 11, 0.3);">
+        <td style="font-weight: 700; color: #F59E0B; display: flex; align-items: center; gap: 10px; border-right: 1px solid var(--border-subtle); padding: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            ⚡
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>Онлайн-заявки</span>
+              <span class="badge-status" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 9px; padding: 2px 6px;">${unassignedApps.length}</span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-dim); font-weight: normal;">Мастер не назначен</div>
+          </div>
+        </td>
+    `;
+
+    for (let i = 0; i < hours.length; i++) {
+      const h = hours[i];
+      const hNum = parseInt(h.split(':')[0], 10);
+      const app = unassignedApps.find(a => {
+        const appHour = parseInt(a.time.split(':')[0], 10);
+        return appHour === hNum;
+      });
+
+      if (app) {
+        const dur = app.duration || 60;
+        const startMin = parseInt((app.time.split(':')[1] || '0'), 10);
+        const totalEndMin = hNum * 60 + startMin + dur;
+        const endHour = Math.floor(totalEndMin / 60);
+        const endMin = totalEndMin % 60;
+        const endTimeStr = String(endHour).padStart(2, '0') + ':' + String(endMin).padStart(2, '0');
+        const spanHours = Math.max(1, Math.ceil(dur / 60));
+        const actualColspan = Math.min(spanHours, hours.length - i);
+
+        html += `
+          <td colspan="${actualColspan}" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.1)); border: 1px solid rgba(245, 158, 11, 0.4); border-left: 3px solid #F59E0B; border-radius: 8px; padding: 8px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); vertical-align: middle;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 3px;">
+              <span style="font-size: 12px; font-weight: 700; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${app.clientName}</span>
+              <span style="font-size: 10px; color: #F59E0B; font-family: var(--font-mono); background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 4px; white-space: nowrap;">
+                ${app.time} – ${endTimeStr} (${dur} мин)
+              </span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${app.serviceName}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; gap: 6px;">
+              <span style="font-size: 10px; color: #FDE68A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${app.suggestedSpecialistName ? 'Рек: ' + app.suggestedSpecialistName : 'Любой мастер'}</span>
+              <button type="button" class="btn btn-primary" onclick="openAssignMasterModal('${app.id}')" style="padding: 3px 8px; font-size: 10px; border-radius: 4px; background: #F59E0B; color: #000; font-weight: 700; white-space: nowrap;">
+                ⚡ Назначить
+              </button>
+            </div>
+          </td>
+        `;
+        i += (actualColspan - 1);
+      } else {
+        html += `<td style="color: var(--text-dim); text-align: center; background: rgba(255,255,255,0.01);"><span style="opacity: 0.15;">—</span></td>`;
+      }
+    }
+    html += `</tr>`;
+  }
+
+  // --- 1.2 МАСТЕРА СТУДИИ ---
   specialists.forEach(sp => {
     // Проверяем статус работы мастера на этот день
     let isWorking = true;
@@ -221,7 +417,7 @@ function renderTimeline() {
       const h = hours[i];
       const hNum = parseInt(h.split(':')[0], 10);
 
-      // Ищем запись, которая начинается в этот час
+      // Ищем запись, назначенную этому мастеру
       const app = appointments.find(a => {
         const isMaster = (a.specialistId === sp.id || (a.specialistName && a.specialistName.includes(sp.name)));
         if (!isMaster) return false;
@@ -237,7 +433,6 @@ function renderTimeline() {
         const endMin = totalEndMin % 60;
         const endTimeStr = String(endHour).padStart(2, '0') + ':' + String(endMin).padStart(2, '0');
 
-        // Расчет количества часовых колонок (например, 60 мин = 1, 120 мин = 2, 180 мин = 3, 300 мин = 5)
         const spanHours = Math.max(1, Math.ceil(dur / 60));
         const actualColspan = Math.min(spanHours, hours.length - i);
 
@@ -282,6 +477,62 @@ function renderTimeline() {
 
   tbody.innerHTML = html;
 }
+
+window.selectTimelineDate = function(dateStr) {
+  currentDate = dateStr;
+  const dateInput = document.getElementById('timelineDateInput');
+  if (dateInput) dateInput.value = dateStr;
+  renderTimeline();
+};
+
+window.openAssignMasterModal = function(appId) {
+  const apps = window.hdData.getAppointments();
+  const app = apps.find(a => a.id === appId);
+  if (!app) return;
+
+  const modal = document.getElementById('adminAssignMasterModal');
+  const closeBtn = document.getElementById('closeAssignMasterModal');
+  const form = document.getElementById('adminAssignMasterForm');
+  const idInput = document.getElementById('assignAppId');
+  const clientNameEl = document.getElementById('assignClientName');
+  const serviceNameEl = document.getElementById('assignServiceName');
+  const dateTimeBadge = document.getElementById('assignDateTimeBadge');
+  const selectEl = document.getElementById('assignMasterSelect');
+
+  if (!modal) return;
+
+  idInput.value = app.id;
+  clientNameEl.textContent = `${app.clientName} (${app.phone})`;
+  serviceNameEl.textContent = `${app.serviceName} ${app.variantName ? '• ' + app.variantName : ''}`;
+  dateTimeBadge.textContent = `📅 ${app.date} в ${app.time} (${app.duration || 60} мин)`;
+
+  const specialists = window.hdData.getSpecialists();
+  selectEl.innerHTML = specialists.map(sp => `
+    <option value="${sp.id}" ${app.suggestedSpecialistId === sp.id ? 'selected' : ''}>
+      ${sp.name} — ${sp.role.split(',')[0]}
+    </option>
+  `).join('');
+
+  modal.classList.add('active');
+
+  const closeModal = () => modal.classList.remove('active');
+  closeBtn.onclick = closeModal;
+  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const chosenSpecId = selectEl.value;
+    const chosenSpec = specialists.find(s => s.id === chosenSpecId);
+    if (chosenSpec) {
+      window.hdData.assignAppointmentSpecialist(app.id, chosenSpec.id, chosenSpec.name);
+      closeModal();
+      updateKPIs();
+      renderTimeline();
+      renderJournal();
+      showAdminToast("Мастер назначен!", `Запись #${app.id} успешно передана мастеру ${chosenSpec.name}`);
+    }
+  };
+};
 
 // --- 2. МАСТЕРА И ГРАФИК РАБОТЫ (НЕДЕЛЬНОЕ РАСПИСАНИЕ) ---
 function renderSpecialistsSchedule() {
@@ -430,7 +681,14 @@ function renderJournal() {
           <div>${a.serviceName}</div>
           ${a.variantName ? `<div style="font-size: 11px; color: var(--text-dim);">${a.variantName}</div>` : ''}
         </td>
-        <td>${a.specialistName}</td>
+        <td>
+          ${a.specialistName}
+          ${(!a.specialistId || a.specialistId === 'any' || a.specialistName === 'Любой свободный мастер') ? `
+            <button type="button" onclick="openAssignMasterModal('${a.id}')" class="btn btn-outline" style="padding: 2px 6px; font-size: 10px; margin-left: 6px; color: #F59E0B; border-color: rgba(245, 158, 11, 0.5);">
+              ⚡ Назначить
+            </button>
+          ` : ''}
+        </td>
         <td>
           <strong>${a.date}</strong> в ${a.time}
         </td>

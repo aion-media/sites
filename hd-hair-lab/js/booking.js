@@ -8,7 +8,7 @@ class BookingEngine {
     this.selectedService = null;
     this.selectedVariant = null;
     this.selectedSpecialist = null;
-    this.selectedDate = new Date().toISOString().split('T')[0];
+    this.selectedDate = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA');
     this.selectedTime = "12:00";
     this.step1SelectedGroup = "all";
     this.step1SelectedSubCategory = "all";
@@ -54,6 +54,7 @@ class BookingEngine {
     if (!this.modal) return;
 
     this.currentStep = 1;
+    this.selectedDate = (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString() : new Date().toLocaleDateString('en-CA');
     this.step1SelectedGroup = "all";
     this.step1SelectedSubCategory = "all";
     this.step1SearchQuery = "";
@@ -373,9 +374,14 @@ class BookingEngine {
 
   // --- ШАГ 3: ВЫБОР ДАТЫ И ВРЕМЕНИ ---
   renderStep3DateTime() {
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrowDate = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    const afterTomorrowDate = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+    const getLocal = (d) => (window.hdData && window.hdData.getLocalDateString) ? window.hdData.getLocalDateString(d) : d.toLocaleDateString('en-CA');
+    const today = getLocal(new Date());
+    const tomorrowDate = getLocal(new Date(Date.now() + 86400000));
+    const afterTomorrowDate = getLocal(new Date(Date.now() + 86400000 * 2));
+
+    if (!this.selectedDate || this.selectedDate < today) {
+      this.selectedDate = today;
+    }
 
     const isMasterWorking = this.isSpecialistWorking(this.selectedSpecialist, this.selectedDate);
 
