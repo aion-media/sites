@@ -34,8 +34,11 @@
         </div>
 
         <nav>
-          <a href="#" class="admin-nav-item active" data-tab="appointments">
-            <span>📅</span> Журнал записей
+          <a href="#" class="admin-nav-item active" data-tab="timeline">
+            <span>📊</span> Шахматка мастеров
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="appointments">
+            <span>📋</span> Журнал записей
           </a>
           <a href="#" class="admin-nav-item" data-tab="services">
             <span>🏷️</span> Услуги и цены
@@ -47,7 +50,7 @@
       </div>
 
       <div style="font-size: 11px; color: #7D887C; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-        <div>EVO Space Admin v2.4</div>
+        <div>EVO Space Admin v2.5</div>
         <div style="margin-top: 4px;">Нячанг, Вьетнам</div>
       </div>
     </aside>
@@ -55,13 +58,16 @@
     <!-- Main Content -->
     <main class="admin-main">
       <!-- Top Bar -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
         <div>
           <h1 class="font-serif" style="font-size: 28px; font-weight: 600;">Панель управления салоном</h1>
-          <p class="text-muted" style="font-size: 13px;">Контроль записей клиентов, управление прейскурантом и ценами в реальном времени</p>
+          <p class="text-muted" style="font-size: 13px;">Шахматка мастеров в реальном времени, контроль записей и прейскуранта</p>
         </div>
         <div style="display: flex; gap: 12px;">
-          <button id="openAddServiceBtn" class="btn btn-gold" style="padding: 10px 20px; font-size: 12px;">
+          <button id="openQuickBookingBtn" class="btn btn-gold" style="padding: 10px 20px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>+</span> Быстрая запись
+          </button>
+          <button id="openAddServiceBtn" class="btn btn-outline" style="padding: 10px 18px; font-size: 12px;">
             + Добавить услугу
           </button>
         </div>
@@ -75,7 +81,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-label">Новые онлайн-заявки</div>
-          <div class="stat-value" id="kpiNewCount" style="color: #D97706;">0</div>
+          <div class="stat-value" id="kpiNewCount" style="color: #10B981;">0</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Ожидаемая выручка</div>
@@ -87,8 +93,58 @@
         </div>
       </div>
 
-      <!-- TAB 1: APPOINTMENTS -->
-      <section class="admin-tab-section" id="tab-appointments">
+      <!-- TAB 1: MASTER TIMELINE GRID (ШАХМАТКА МАСТЕРОВ) -->
+      <section class="admin-tab-section" id="tab-timeline">
+        <div class="timeline-control-panel">
+          <!-- Left: Date Navigator -->
+          <div class="timeline-date-nav">
+            <button id="timelinePrevDayBtn" class="timeline-arrow-btn" title="Предыдущий день">‹</button>
+            <button id="timelineTodayBtn" class="btn btn-outline timeline-today-btn">Сегодня</button>
+            <button id="timelineNextDayBtn" class="timeline-arrow-btn" title="Следующий день">›</button>
+            
+            <div class="timeline-date-picker-wrap">
+              <input type="date" id="timelineDatePicker" class="timeline-date-input">
+              <div class="timeline-date-header">
+                <span id="timelineFormattedDate">Загрузка даты...</span>
+                <span id="timelineTodayBadge" class="timeline-badge-today" style="display: none;">Сегодня</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Branch Filter Pills -->
+          <div class="timeline-branch-filters">
+            <span class="timeline-filter-title">Филиал:</span>
+            <button class="timeline-branch-pill active" data-branch="all">Все филиалы</button>
+            <button class="timeline-branch-pill" data-branch="sever">📍 EVO Sever</button>
+            <button class="timeline-branch-pill" data-branch="center">📍 EVO Beauty Space</button>
+          </div>
+        </div>
+
+        <!-- Status Legend Bar (Соответствие цветовой схеме) -->
+        <div class="timeline-legend-row">
+          <div class="timeline-legend-tags">
+            <div class="timeline-legend-tag"><span class="legend-dot status-dot-new"></span> <strong>Зелёная</strong>: Новая бронь</div>
+            <div class="timeline-legend-tag"><span class="legend-dot status-dot-confirmed"></span> <strong>Оранжевая</strong>: Подтверждена</div>
+            <div class="timeline-legend-tag"><span class="legend-dot status-dot-completed"></span> <strong>Синенькая</strong>: Выполнена</div>
+            <div class="timeline-legend-tag"><span class="legend-dot status-dot-in_progress"></span> <strong>Фиолетовая</strong>: В процессе</div>
+          </div>
+          <div class="timeline-legend-tip">
+            💡 <em>Кликните по свободному времени для быстрой записи к мастеру</em>
+          </div>
+        </div>
+
+        <!-- Timeline Board Container -->
+        <div class="timeline-board-card">
+          <div class="timeline-board-scroll" id="timelineBoardScroll">
+            <div class="timeline-board-table" id="timelineBoard">
+              <!-- Dynamically rendered via admin.js -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: APPOINTMENTS LIST -->
+      <section class="admin-tab-section" id="tab-appointments" style="display: none;">
         <div class="admin-table-card">
           <div class="admin-table-head">
             <h3 class="font-serif" style="font-size: 20px;">Входящие бронирования</h3>
@@ -287,6 +343,199 @@
           Сохранить изменения ✨
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Quick Booking (Администраторская быстрая запись) -->
+  <div class="modal-overlay" id="quickBookingModal" style="display: none;">
+    <div class="booking-modal" style="max-width: 540px;">
+      <button class="modal-close" id="closeQuickBookingBtn">✕</button>
+      <h3 class="font-serif" style="font-size: 24px; margin-bottom: 6px;">Быстрая запись клиента</h3>
+      <p class="text-muted" style="font-size: 13px; margin-bottom: 20px;" id="quickBookingSubtitle">
+        Запись в журнал расписания салона
+      </p>
+
+      <form id="quickBookingForm">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Специалист *</label>
+            <select id="qbSpecialistSelect" class="form-select" required>
+              <!-- Filled in admin.js -->
+            </select>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Филиал *</label>
+            <select id="qbBranchSelect" class="form-select" required>
+              <option value="EVO Sever (40 Đ. Bắc Sơn)">EVO Sever (Север)</option>
+              <option value="EVO Beauty Space (94 Hùng Vương)">EVO Beauty Space (Центр)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Дата процедуры *</label>
+            <input type="date" id="qbDateInput" class="form-input" required>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Время начала *</label>
+            <select id="qbTimeSelect" class="form-select" required>
+              <option value="09:00">09:00</option>
+              <option value="09:30">09:30</option>
+              <option value="10:00">10:00</option>
+              <option value="10:30">10:30</option>
+              <option value="11:00">11:00</option>
+              <option value="11:30">11:30</option>
+              <option value="12:00">12:00</option>
+              <option value="12:30">12:30</option>
+              <option value="13:00">13:00</option>
+              <option value="13:30">13:30</option>
+              <option value="14:00">14:00</option>
+              <option value="14:30">14:30</option>
+              <option value="15:00">15:00</option>
+              <option value="15:30">15:30</option>
+              <option value="16:00">16:00</option>
+              <option value="16:30">16:30</option>
+              <option value="17:00">17:00</option>
+              <option value="17:30">17:30</option>
+              <option value="18:00">18:00</option>
+              <option value="18:30">18:30</option>
+              <option value="19:00">19:00</option>
+              <option value="19:30">19:30</option>
+              <option value="20:00">20:00</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Имя клиента *</label>
+            <input type="text" id="qbClientName" class="form-input" placeholder="Анастасия" required>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Телефон *</label>
+            <input type="tel" id="qbClientPhone" class="form-input" placeholder="+84 90 123 4567" required>
+          </div>
+        </div>
+
+        <div class="booking-form-group">
+          <label class="form-label">Выбор услуги *</label>
+          <select id="qbServiceSelect" class="form-select" required>
+            <!-- Filled dynamically in admin.js -->
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="booking-form-group">
+            <label class="form-label">Стоимость (₫)</label>
+            <input type="number" id="qbPriceInput" class="form-input" placeholder="0">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Статус записи *</label>
+            <select id="qbStatusSelect" class="form-select">
+              <option value="confirmed">🟠 Подтверждённая (Оранжевая)</option>
+              <option value="new">🟢 Новая (Зелёная)</option>
+              <option value="in_progress">⏳ В процессе (Фиолетовая)</option>
+              <option value="completed">🔵 Выполнена (Синяя)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="booking-form-group">
+          <label class="form-label">Примечание к записи</label>
+          <textarea id="qbCommentInput" class="form-textarea" rows="2" placeholder="Особые пожелания гостя, чай/кофе, зона кожи..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-gold" style="width: 100%; padding: 14px; font-size: 13px; margin-top: 8px;">
+          Сохранить и закрепить в шахматке ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Appointment Details & Status Switcher -->
+  <div class="modal-overlay" id="appointmentDetailModal" style="display: none;">
+    <div class="booking-modal" style="max-width: 520px;">
+      <button class="modal-close" id="closeAppDetailBtn">✕</button>
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span id="appDetailBadge" class="status-badge status-confirmed">Подтверждена</span>
+        <span id="appDetailId" style="font-size: 13px; color: var(--color-text-muted); font-weight: 600;">#EVO-8021</span>
+      </div>
+
+      <h3 id="appDetailClientName" class="font-serif" style="font-size: 26px; margin-bottom: 4px;">Екатерина Миронова</h3>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+        <a id="appDetailPhoneLink" href="#" style="color: var(--color-primary); font-size: 14px; font-weight: 600; text-decoration: none;">
+          📞 <span id="appDetailPhone">+84 98 441 2309</span>
+        </a>
+        <a id="appDetailWaLink" href="#" target="_blank" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; text-decoration: none; border-radius: 20px;">
+          💬 WhatsApp
+        </a>
+      </div>
+
+      <div style="background: var(--color-bg); border-radius: 12px; padding: 18px; margin-bottom: 22px; border: 1px solid var(--color-border); font-size: 13px; display: flex; flex-direction: column; gap: 10px;">
+        <div>
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); letter-spacing: 0.05em;">Процедура</div>
+          <div id="appDetailService" style="font-weight: 600; font-size: 15px; color: var(--color-text-main); margin-top: 2px;">Биоревитализация Profhilo</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 8px; border-top: 1px dashed var(--color-border-light);">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted);">Мастер</div>
+            <div id="appDetailSpecialist" style="font-weight: 600; margin-top: 2px;">Александра Иванова</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted);">Филиал</div>
+            <div id="appDetailBranch" style="font-weight: 500; margin-top: 2px; font-size: 12px;">EVO Beauty Space</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 8px; border-top: 1px dashed var(--color-border-light);">
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted);">Дата и время</div>
+            <div id="appDetailDateTime" style="font-weight: 600; margin-top: 2px; color: var(--color-primary);">Сегодня, 11:00</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted);">Стоимость</div>
+            <div id="appDetailPrice" style="font-weight: 700; margin-top: 2px; font-size: 15px; color: var(--color-accent-gold);">8 500 000 ₫</div>
+          </div>
+        </div>
+
+        <div id="appDetailCommentWrap" style="padding-top: 8px; border-top: 1px dashed var(--color-border-light);">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--color-text-muted);">Примечание</div>
+          <div id="appDetailComment" style="font-style: italic; color: var(--color-text-main); margin-top: 2px;">Впервые на процедуре, чувствительная кожа.</div>
+        </div>
+      </div>
+
+      <!-- Status Switcher Buttons -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: 10px; font-weight: 600;">
+          Изменить статус брони:
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+          <button class="btn btn-outline app-status-change-btn" data-status="new" style="padding: 10px; font-size: 12px; border-color: #10B981; color: #065F46; background: #ECFDF5;">
+            🟢 Новая
+          </button>
+          <button class="btn btn-outline app-status-change-btn" data-status="confirmed" style="padding: 10px; font-size: 12px; border-color: #F59E0B; color: #92400E; background: #FFFBEB;">
+            🟠 Подтверждена
+          </button>
+          <button class="btn btn-outline app-status-change-btn" data-status="in_progress" style="padding: 10px; font-size: 12px; border-color: #8B5CF6; color: #5B21B6; background: #F5F3FF;">
+            ⏳ В процессе
+          </button>
+          <button class="btn btn-outline app-status-change-btn" data-status="completed" style="padding: 10px; font-size: 12px; border-color: #3B82F6; color: #1E40AF; background: #EFF6FF;">
+            🔵 Выполнена
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--color-border-light);">
+        <button id="deleteAppointmentBtn" style="background: none; border: none; color: #EF4444; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+          🗑️ Удалить запись
+        </button>
+        <button id="closeAppDetailFooterBtn" class="btn btn-outline" style="padding: 8px 18px; font-size: 12px;">
+          Закрыть
+        </button>
+      </div>
     </div>
   </div>
 
