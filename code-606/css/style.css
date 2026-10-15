@@ -1378,6 +1378,19 @@ button {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --header-height: 70px;
+  }
+  .container {
+    padding: 0 16px;
+  }
+  .logo-wrap img {
+    height: 38px;
+  }
+  .header-actions .btn {
+    padding: 9px 18px;
+    font-size: 13px;
+  }
   .nav-links {
     display: none;
   }
@@ -1392,6 +1405,19 @@ button {
   }
   .hero-title {
     font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-wrap img {
+    height: 32px;
+  }
+  .header-actions .btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .hero-cta-group .btn {
+    width: 100%;
   }
 }
 
