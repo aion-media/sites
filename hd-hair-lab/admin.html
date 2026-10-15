@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>H&D Hair Lab CRM | Панель управления салоном</title>
+  <link rel="stylesheet" href="css/style.css?v=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body style="background: var(--bg-deep); color: var(--text-main);">
+
+  <!-- PIN Protection Overlay -->
+  <div id="pinLockScreen" style="position: fixed; inset: 0; z-index: 9999; background: #0A0B0E; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); padding: 40px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+      <div style="font-size: 38px; margin-bottom: 12px;">🔒</div>
+      <h2 style="font-size: 22px; margin-bottom: 8px;">H&D Hair Lab CRM</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Введите PIN-код доступа администратора</p>
+      
+      <form id="pinAuthForm">
+        <input type="password" id="pinInput" maxlength="6" placeholder="••••" style="width: 100%; text-align: center; font-size: 28px; letter-spacing: 0.3em; padding: 12px; border-radius: 12px; border: 1px solid var(--border-medium); background: var(--bg-deep); color: #FFFFFF; outline: none; margin-bottom: 16px;">
+        <div id="pinErrorMsg" style="color: #EF4444; font-size: 12px; margin-bottom: 12px; display: none;">Неверный PIN-код</div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px;">Войти в CRM</button>
+      </form>
+      <div style="font-size: 11px; color: var(--text-dim); margin-top: 16px;">PIN по умолчанию: 1234</div>
+    </div>
+  </div>
+
+  <!-- Admin Main Layout -->
+  <div class="admin-layout" id="adminMainLayout" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div>
+        <div style="margin-bottom: 32px;">
+          <img src="assets/logo.svg" alt="H&D Hair Lab" style="height: 48px; width: auto; object-fit: contain;">
+        </div>
+
+        <nav>
+          <a href="#" class="admin-nav-item active" data-tab="timeline">
+            <span>📅</span> Расписание на день
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="specialists">
+            <span>👥</span> Мастера и график работы
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="appointments">
+            <span>📋</span> Журнал записей
+          </a>
+          <a href="#" class="admin-nav-item" data-tab="services">
+            <span>🏷️</span> Услуги и цены
+          </a>
+          <a href="index.html" target="_blank" class="admin-nav-item" style="color: #FFFFFF; margin-top: 24px; border: 1px solid var(--border-subtle);">
+            <span>↗</span> Открыть сайт студии
+          </a>
+        </nav>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-dim); padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+        <div>H&D Hair Lab v1.0</div>
+        <div style="margin-top: 4px;">11 Cao Văn Bé, Nha Trang</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Top Action Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 style="font-size: 28px; font-weight: 700;">Панель управления студией</h1>
+          <p style="font-size: 13px; color: var(--text-muted);">Расписание на день в реальном времени, график мастеров, журнал клиентов и прейскурант</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button id="openQuickBookingBtn" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px;">
+            <span>+</span> Записать клиента
+          </button>
+          <button id="openAddServiceBtn" class="btn btn-outline" style="padding: 10px 18px; font-size: 13px;">
+            + Добавить услугу
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="admin-stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Записей на сегодня</div>
+          <div class="stat-value" id="kpiTodayCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Новые онлайн-заявки</div>
+          <div class="stat-value" id="kpiNewCount" style="color: var(--accent-emerald);">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Ожидаемая выручка</div>
+          <div class="stat-value" id="kpiRevenue" style="color: #FFFFFF;">0 ₫</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Всего услуг в базе</div>
+          <div class="stat-value" id="kpiServicesCount">0</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: MASTER TIMELINE GRID (РАСПИСАНИЕ НА ДЕНЬ) -->
+      <section class="admin-tab-section" id="tab-timeline">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="font-size: 20px;">Расписание на день</h2>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 13px; color: var(--text-muted);">Дата:</label>
+            <input type="date" id="timelineDateInput" class="form-input" style="width: auto; padding: 6px 12px; font-size: 13px;">
+          </div>
+        </div>
+
+        <div class="timeline-container">
+          <table class="timeline-table">
+            <thead>
+              <tr>
+                <th style="width: 180px;">Специалист</th>
+                <th>10:00</th>
+                <th>11:00</th>
+                <th>12:00</th>
+                <th>13:00</th>
+                <th>14:00</th>
+                <th>15:00</th>
+                <th>16:00</th>
+                <th>17:00</th>
+                <th>18:00</th>
+                <th>19:00</th>
+              </tr>
+            </thead>
+            <tbody id="timelineTableBody">
+              <!-- Injected via admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 2: SPECIALISTS AND SCHEDULE (МАСТЕРА И ГРАФИК РАБОТЫ) -->
+      <section class="admin-tab-section" id="tab-specialists" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 style="font-size: 20px;">Мастера и график работы</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Управление мастерами, создание профилей и быстрая настройка рабочих смен на неделю</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-md);">
+              <button type="button" class="btn btn-glass" id="schedulePrevWeekBtn" style="padding: 4px 10px; font-size: 12px;">‹ Пред. неделя</button>
+              <span id="scheduleCurrentWeekLabel" style="font-size: 13px; font-weight: 600; color: #FFFFFF; min-width: 140px; text-align: center;">Неделя</span>
+              <button type="button" class="btn btn-glass" id="scheduleNextWeekBtn" style="padding: 4px 10px; font-size: 12px;">След. неделя ›</button>
+            </div>
+            <button class="btn btn-primary" id="openAddSpecialistBtn" style="padding: 10px 18px; font-size: 13px;">
+              + Добавить мастера
+            </button>
+          </div>
+        </div>
+
+        <div class="timeline-container">
+          <table class="timeline-table" style="min-width: 950px;">
+            <thead>
+              <tr id="scheduleDaysHeader">
+                <!-- Injected via admin.js -->
+              </tr>
+            </thead>
+            <tbody id="specialistsScheduleTableBody">
+              <!-- Injected via admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: APPOINTMENTS JOURNAL (ЖУРНАЛ ЗАПИСЕЙ) -->
+      <section class="admin-tab-section" id="tab-appointments" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <h2 style="font-size: 20px;">Журнал записей клиентов</h2>
+          <div style="display: flex; gap: 10px;">
+            <select id="journalStatusFilter" class="form-select" style="width: auto; padding: 8px 12px; font-size: 13px;">
+              <option value="all">Все статусы</option>
+              <option value="new">Новые заявки</option>
+              <option value="confirmed">Подтвержденные</option>
+              <option value="completed">Выполненные</option>
+              <option value="cancelled">Отмененные</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="timeline-container">
+          <table class="timeline-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Клиент</th>
+                <th>Телефон</th>
+                <th>Процедура</th>
+                <th>Мастер</th>
+                <th>Дата и Время</th>
+                <th>Стоимость</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="journalTableBody">
+              <!-- Injected via admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: SERVICES AND PRICES (УСЛУГИ И ЦЕНЫ) -->
+      <section class="admin-tab-section" id="tab-services" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 700;">Управление каталогом услуг и ценами</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Каталог сгруппирован по категориям в виде аккордеонов. Раскрывайте нужную категорию для просмотра и редактирования</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-glass" id="toggleAllCategoriesBtn" style="padding: 8px 14px; font-size: 12px;">
+              Развернуть все ▾
+            </button>
+            <button class="btn btn-primary" id="addServiceTabBtn" style="padding: 8px 16px; font-size: 13px;">
+              + Создать новую услугу
+            </button>
+          </div>
+        </div>
+
+        <!-- Поиск по каталогу услуг -->
+        <div style="margin-bottom: 20px;">
+          <input type="text" id="adminServiceSearchInput" class="form-input" placeholder="🔍 Быстрый поиск услуги по названию или описанию..." style="max-width: 480px;">
+        </div>
+
+        <!-- Контейнер аккордеонов категорий -->
+        <div id="adminServicesAccordionContainer" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Injected via admin.js -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: Быстрая запись администратором -->
+  <div class="modal-overlay" id="adminQuickBookingModal">
+    <div class="booking-modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3>Новая запись клиента</h3>
+        <button class="modal-close-btn" id="closeQuickBookingModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminQuickBookingForm">
+          <div class="booking-form-group">
+            <label class="form-label">Имя клиента *</label>
+            <input type="text" id="adminClientName" class="form-input" required placeholder="Имя клиента">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Телефон / Telegram / WhatsApp *</label>
+            <input type="text" id="adminClientPhone" class="form-input" required placeholder="+84 ... или +7 ...">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Услуга *</label>
+            <select id="adminServiceSelect" class="form-select" required></select>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Мастер *</label>
+            <select id="adminSpecialistSelect" class="form-select" required></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="booking-form-group">
+              <label class="form-label">Дата *</label>
+              <input type="date" id="adminBookingDate" class="form-input" required>
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Время *</label>
+              <select id="adminBookingTime" class="form-select" required>
+                <option value="10:00">10:00</option>
+                <option value="11:00">11:00</option>
+                <option value="12:00">12:00</option>
+                <option value="13:00">13:00</option>
+                <option value="14:00">14:00</option>
+                <option value="15:00">15:00</option>
+                <option value="16:00">16:00</option>
+                <option value="17:00">17:00</option>
+                <option value="18:00">18:00</option>
+                <option value="19:00">19:00</option>
+              </select>
+            </div>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Комментарий</label>
+            <textarea id="adminBookingComment" class="form-textarea" rows="2" placeholder="Заметка мастера, пожелания..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 10px;">
+            Создать бронь в CRM ✨
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Создание и редактирование услуги -->
+  <div class="modal-overlay" id="adminEditServiceModal">
+    <div class="booking-modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 id="editServiceModalTitle">Услуга студии</h3>
+        <button class="modal-close-btn" id="closeEditServiceModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminEditServiceForm">
+          <input type="hidden" id="editServiceId">
+          <div class="booking-form-group">
+            <label class="form-label">Название процедуры *</label>
+            <input type="text" id="editServiceName" class="form-input" required placeholder="Например: Сложное окрашивание AirTouch">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Категория услуги *</label>
+            <select id="editServiceCategory" class="form-select" required></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+            <div class="booking-form-group">
+              <label class="form-label">Базовая цена (₫) *</label>
+              <input type="number" id="editServicePrice" class="form-input" step="50000" min="0" required placeholder="Например: 1500000">
+            </div>
+            <div class="booking-form-group">
+              <label class="form-label">Длительность *</label>
+              <select id="editServiceDuration" class="form-select" required>
+                <option value="30">30 мин (0.5 ч)</option>
+                <option value="45">45 мин</option>
+                <option value="60" selected>60 мин (1 час)</option>
+                <option value="90">90 мин (1.5 ч)</option>
+                <option value="120">120 мин (2 часа)</option>
+                <option value="150">150 мин (2.5 ч)</option>
+                <option value="180">180 мин (3 часа)</option>
+                <option value="240">240 мин (4 часа)</option>
+                <option value="300">300 мин (5 часов)</option>
+                <option value="360">360 мин (6 часов)</option>
+              </select>
+            </div>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Краткое описание процедуры</label>
+            <textarea id="editServiceDesc" class="form-textarea" rows="2" placeholder="Особенности техники, препараты, кому подходит..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 10px;">
+            Сохранить услугу ✨
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Создание и редактирование мастера -->
+  <div class="modal-overlay" id="adminSpecialistModal">
+    <div class="booking-modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 id="specialistModalTitle">Мастер студии</h3>
+        <button class="modal-close-btn" id="closeSpecialistModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="adminSpecialistForm">
+          <input type="hidden" id="specEditId">
+          <div class="booking-form-group">
+            <label class="form-label">Имя мастера *</label>
+            <input type="text" id="specEditName" class="form-input" required placeholder="Например: Helen (Елена)">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Должность / Специализация *</label>
+            <input type="text" id="specEditRole" class="form-input" required placeholder="Например: Шеф-колорист, мастер по AirTouch">
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Опыт работы / Регалии</label>
+            <textarea id="specEditExperience" class="form-textarea" rows="2" placeholder="Опыт более 10 лет, сложные техники окрашивания, международные дипломы"></textarea>
+          </div>
+          <div class="booking-form-group">
+            <label class="form-label">Ссылка на фото (аватар)</label>
+            <input type="url" id="specEditAvatar" class="form-input" placeholder="https://images.unsplash.com/...">
+          </div>
+
+          <div class="booking-form-group">
+            <label class="form-label">Направления услуг мастера:</label>
+            <div id="specCategoryCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--text-sub);">
+              <!-- Injected via admin.js -->
+            </div>
+          </div>
+
+          <div class="booking-form-group">
+            <label class="form-label">Постоянные рабочие дни по умолчанию:</label>
+            <div id="specWorkDaysCheckboxes" style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="1" checked> Пн</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="2" checked> Вт</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="3" checked> Ср</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="4" checked> Чт</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="5" checked> Пт</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="6" checked> Сб</label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer;"><input type="checkbox" name="workday" value="7" checked> Вс</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 10px;">
+            Сохранить мастера ✨
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js?v=1.1"></script>
+  <script src="js/admin.js?v=1.1"></script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>H&D Hair Lab | Студия экспертной колористики и заботы о волосах в Нячанге</title>
+  <meta name="description" content="H&D Hair Lab в Нячанге. Сложные техники окрашивания: AirTouch, Total Blond, Balayage, Контуринг, выход из черного. Молекулярный уход, мужские и женские стрижки, брови и макияж.">
+  <link rel="stylesheet" href="css/style.css?v=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+
+  <!-- Fixed Top Navigation Bar -->
+  <header class="header">
+    <div class="container header-inner">
+      <!-- Brand Logo -->
+      <a href="index.html" class="logo-wrap" title="H&D Hair Lab">
+        <img src="assets/logo.svg" alt="H&D Hair Lab" class="brand-logo-img">
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#about" class="nav-link">О студии</a></li>
+          <li><a href="#services" class="nav-link">Услуги и прайс</a></li>
+          <li><a href="#team" class="nav-link">Мастера</a></li>
+          <li><a href="#guide" class="nav-link">Гид по длине</a></li>
+          <li><a href="#contacts" class="nav-link">Контакты</a></li>
+        </ul>
+      </nav>
+
+      <!-- Action Group -->
+      <div class="header-actions">
+        <a href="tel:+84382437900" class="phone-pill">
+          <span>📞</span> +84 382 437 900
+        </a>
+        <button class="btn btn-primary" onclick="window.bookingEngine.open()">
+          Записаться онлайн ✨
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="about">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-pill-tag">
+          <span class="dot"></span>
+          <span>Нячанг • Север • Комплекс Oceanus (11 Cao Văn Bé)</span>
+        </div>
+        
+        <h1 class="hero-title">
+          Красота — это наука. <br>
+          <span class="highlight">Мы знаем формулу.</span>
+        </h1>
+        
+        <p class="hero-desc">
+          Премиальная русскоязычная студия колористики в Нячанге. Сложные техники осветления AirTouch, Total Blond, выход из темного без повреждения волос, молекулярное восстановление структуры и мужской барбер-зал.
+        </p>
+
+        <div class="hero-features">
+          <div class="feature-item">
+            <div class="feature-icon-circle">✓</div>
+            <span>Колористы с опытом от 15 лет</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon-circle">✓</div>
+            <span>Защита дисульфидных связей</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon-circle">✓</div>
+            <span>Уход под влажный морской климат</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon-circle">✓</div>
+            <span>Бесплатная диагностика и тест-прядь</span>
+          </div>
+        </div>
+
+        <div class="hero-cta-group">
+          <button class="btn btn-primary" data-action="book-general" style="padding: 16px 36px; font-size: 15px;">
+            Записаться на консультацию / визит ✨
+          </button>
+          <a href="#services" class="btn btn-outline" style="padding: 16px 28px; font-size: 15px;">
+            Смотреть меню процедур ▾
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-card-frame">
+          <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1000&q=80" alt="H&D Hair Lab Studio">
+          <div class="hero-card-overlay"></div>
+        </div>
+        
+        <div class="hero-badge-float" onclick="window.bookingEngine.open('srv-airtouch')" style="cursor: pointer;" title="Записаться на флагманское окрашивание AirTouch">
+          <div>
+            <div class="badge-info-label">Флагманское направление</div>
+            <div class="badge-info-val">Сложные техники осветления AirTouch</div>
+          </div>
+          <button class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;">Выбрать ›</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Catalog Section -->
+  <section class="section" id="services">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Каталог услуг H&D Hair Lab</span>
+        <h2 class="section-title">Прейскурант и онлайн-запись</h2>
+        <p class="section-subtitle">Выберите интересующую процедуру или воспользуйтесь быстрым поиском</p>
+      </div>
+
+      <!-- Toolbar: Search & Categories -->
+      <div class="catalog-toolbar">
+        <div class="search-bar-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="serviceSearchInput" placeholder="Поиск процедуры: AirTouch, Блонд, Стрижка, Пилинг, Брови...">
+        </div>
+
+        <div class="category-tabs-nav" id="categoryTabs">
+          <!-- Injected via app.js -->
+        </div>
+
+        <!-- Подкатегории для выбранной группы (например, в Окрашивании: Сложные техники / Однотонное / Снятие цвета) -->
+        <div class="sub-category-pills-nav" id="subCategoryTabs" style="display: none;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+
+      <!-- Services Grid -->
+      <div class="services-grid" id="servicesGrid">
+        <!-- Injected via app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Specialists / Team Section -->
+  <section class="section team-section" id="team">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Экспертная команда H&D</span>
+        <h2 class="section-title">Мастера и колористы студии</h2>
+        <p class="section-subtitle">Русскоязычные профессионалы с опытом до 15 лет в колористике и парикмахерском искусстве</p>
+      </div>
+
+      <div class="team-grid" id="specialistsGrid">
+        <!-- Injected via app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Hair Length Guide & Client Rules -->
+  <section class="section" id="guide">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Прозрачность и стандарты</span>
+        <h2 class="section-title">Как определяется длина и подготовка</h2>
+        <p class="section-subtitle">В нашей студии нет скрытых доплат. Мы ценим ваше время и открыты во всём</p>
+      </div>
+
+      <div class="info-guide-grid">
+        <!-- Guide 1: Lengths -->
+        <div class="info-card">
+          <h3 class="info-card-title">
+            <span>📏</span> Градация длины волос
+          </h3>
+          <ul class="info-steps-list">
+            <li>
+              <span class="step-num">1</span>
+              <div>
+                <strong style="color: #FFF;">1-2 Длина (до плеч / каре):</strong>
+                <p>Короткие стрижки, пикси, каре до уровня подбородка или плеч.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <div>
+                <strong style="color: #FFF;">3 Длина (до лопаток):</strong>
+                <p>Средняя длина волос от плеч до нижней линии лопаток.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <div>
+                <strong style="color: #FFF;">4 Длина (ниже лопаток / по пояс):</strong>
+                <p>Длинные и ультрадлинные волосы ниже уровня лопаток.</p>
+              </div>
+            </li>
+          </ul>
+          <div style="font-size: 13px; color: var(--accent-silver); margin-top: 16px; padding: 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            ℹ️ При повышенной густоте волос или наличии наращенных прядей применяется доплата +20% из-за увеличенного расхода премиальных составов.
+          </div>
+        </div>
+
+        <!-- Guide 2: Rules -->
+        <div class="info-card">
+          <h3 class="info-card-title">
+            <span>🔬</span> Подготовка к окрашиванию
+          </h3>
+          <ul class="info-steps-list">
+            <li>
+              <span class="step-num">✓</span>
+              <div>
+                <strong style="color: #FFF;">Бесплатная тест-прядь:</strong>
+                <p>Если ваши волосы ранее окрашивались бытовыми красителями или хной — мы всегда делаем тест-прядь для безопасности.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num">✓</span>
+              <div>
+                <strong style="color: #FFF;">Молекулярная защита:</strong>
+                <p>В каждое сложное окрашивание уже включен уход, укрепляющий внутренние белковые связи волоса.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num">✓</span>
+              <div>
+                <strong style="color: #FFF;">Подбор домашней формулы:</strong>
+                <p>Даем персональные рекомендации по шампуням и защите волос от ультрафиолета и соли Южно-Китайского моря.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Location and Contacts -->
+  <section class="section" id="contacts">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Локация</span>
+        <h2 class="section-title">Как нас найти в Нячанге</h2>
+        <p class="section-subtitle">Студия находится в тихой и уютной локации на севере города возле комплекса Oceanus</p>
+      </div>
+
+      <div class="contacts-grid">
+        <div class="contact-card-box">
+          <div class="contact-row">
+            <div class="contact-icon">📍</div>
+            <div>
+              <div class="contact-label">Точный адрес</div>
+              <div class="contact-value">11 Đường Cao Văn Bé, Vĩnh Phước, Nha Trang</div>
+              <p style="font-size: 13px; margin-top: 4px; color: var(--text-muted);">
+                Север Нячанга, жилой комплекс Oceanus (Mường Thanh Viễn Triều), 2 минуты от набережной
+              </p>
+            </div>
+          </div>
+
+          <div class="contact-row">
+            <div class="contact-icon">⏰</div>
+            <div>
+              <div class="contact-label">Часы работы</div>
+              <div class="contact-value">Ежедневно: 10:00 – 20:00</div>
+              <p style="font-size: 13px; margin-top: 4px; color: var(--text-muted);">Без выходных и перерывов</p>
+            </div>
+          </div>
+
+          <div class="contact-row">
+            <div class="contact-icon">💬</div>
+            <div>
+              <div class="contact-label">Быстрая связь</div>
+              <div class="contact-value" style="display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap;">
+                <a href="https://t.me/HD_hair_lab" target="_blank" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">
+                  Telegram @HD_hair_lab
+                </a>
+                <a href="https://wa.me/84382437900" target="_blank" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">
+                  WhatsApp
+                </a>
+                <a href="https://www.instagram.com/hd.hairlab.nhatrang/" target="_blank" class="btn btn-outline" style="padding: 8px 16px; font-size: 13px;">
+                  Instagram
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+            <button class="btn btn-primary" onclick="window.bookingEngine.open()" style="width: 100%; padding: 16px;">
+              Забронировать визит онлайн ✨
+            </button>
+          </div>
+        </div>
+
+        <div class="map-container-wrap">
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3898.718337777169!2d109.2019842!3d12.272863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3170672587e66193%3A0x87ea115620301cb5!2sH%26D%20Hair%20Lab%20Nha%20Trang!5e0!3m2!1sen!2svn!4v1710000000000!5m2!1sen!2svn" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <!-- AION Partner Integration Banner -->
+      <div class="aion-footer-banner">
+        <div class="aion-banner-text">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 4px;">Партнерский сервис AION</div>
+          <h5 style="color: #FFFFFF;">Приложение для жизни за границей и в Нячанге</h5>
+          <p>Все проверенные места, сервисы и локальные услуги в одном приложении</p>
+        </div>
+        <a href="https://t.me/AIONTravelBot/app?startapp=ref_COX2XQLL" target="_blank" class="btn btn-outline" style="padding: 10px 20px; font-size: 13px;">
+          Открыть AION ↗
+        </a>
+      </div>
+
+      <div class="footer-top-grid">
+        <div class="footer-brand">
+          <img src="assets/logo.svg" alt="H&D Hair Lab" style="height: 48px; width: auto; margin-bottom: 8px;">
+          <p>
+            Премиальная студия колористики и молекулярного восстановления волос в Нячанге. Экспертный подход, безопасность полотна и идеальный результат.
+          </p>
+        </div>
+
+        <div>
+          <div class="footer-col-title">Навигация</div>
+          <ul class="footer-nav-list">
+            <li><a href="#about">О пространстве</a></li>
+            <li><a href="#services">Прейскурант услуг</a></li>
+            <li><a href="#team">Наши мастера</a></li>
+            <li><a href="#contacts">Контакты и карта</a></li>
+            <li><a href="admin.html" target="_blank" style="color: var(--accent-silver);">Панель администратора (CRM) 🔒</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title">Онлайн-запись</div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            Запись доступна 24/7 через встроенный модуль или в Altegio:
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn btn-primary" onclick="window.bookingEngine.open()" style="font-size: 13px; padding: 10px 18px;">
+              Записаться через сайт ✨
+            </button>
+            <a href="https://n1382840.alteg.io" target="_blank" class="btn btn-outline" style="font-size: 13px; padding: 10px 18px;">
+              Виджет Altegio ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 H&D Hair Lab Nha Trang. Все права защищены.</div>
+        <div>Адрес: 11 Cao Văn Bé, Vĩnh Phước, Nha Trang, Khánh Hòa</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Booking Modal Engine Overlay (5 Steps) -->
+  <div class="modal-overlay" id="bookingModalOverlay">
+    <div class="booking-modal-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🔬</span>
+          <h3>Онлайн-запись в H&D Hair Lab</h3>
+        </div>
+        <button class="modal-close-btn" id="bookingModalClose">&times;</button>
+      </div>
+
+      <!-- Step Indicators -->
+      <div class="booking-steps-bar">
+        <div class="step-indicator active">
+          <div class="step-dot">1</div>
+          <span>Услуга</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">2</div>
+          <span>Мастер</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">3</div>
+          <span>Время</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">4</div>
+          <span>Контакты</span>
+        </div>
+        <div class="step-indicator">
+          <div class="step-dot">5</div>
+          <span>Бронь</span>
+        </div>
+      </div>
+
+      <!-- Dynamic Step Content -->
+      <div class="modal-body" id="bookingStepsContent">
+        <!-- Injected via js/booking.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js?v=1.2"></script>
+  <script src="js/booking.js?v=1.2"></script>
+  <script src="js/app.js?v=1.2"></script>
+</body>
+</html>
