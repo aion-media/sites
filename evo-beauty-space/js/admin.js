@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="timeline-card-service" title="${app.serviceName}">✨ ${app.serviceName}</div>
                 <div class="timeline-card-footer">
                   <span class="timeline-card-price">${window.evoData.formatMoney(app.price)}</span>
-                  <span style="font-size: 10px; opacity: 0.85;">📞 ${app.phone.slice(-9)}</span>
+                  <span style="font-size: 10px; opacity: 0.85;">${app.phone ? '📞 ' + app.phone.slice(-9) : ''}</span>
                 </div>
               </div>
             `;
@@ -495,13 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedAppForDetail = app;
 
     document.getElementById('appDetailId').textContent = `#${app.id}`;
-    document.getElementById('appDetailClientName').textContent = app.clientName;
-    document.getElementById('appDetailPhone').textContent = app.phone;
-    document.getElementById('appDetailPhoneLink').href = `tel:${app.phone}`;
+    document.getElementById('appDetailClientName').textContent = app.clientName || 'Гость';
+    document.getElementById('appDetailPhone').textContent = app.phone || '—';
+    document.getElementById('appDetailPhoneLink').href = app.phone ? `tel:${app.phone}` : '#';
 
     // WhatsApp link
-    const cleanPhone = app.phone.replace(/[^0-9]/g, '');
-    document.getElementById('appDetailWaLink').href = `https://wa.me/${cleanPhone}`;
+    const cleanPhone = (app.phone || '').replace(/[^0-9]/g, '');
+    document.getElementById('appDetailWaLink').href = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
 
     document.getElementById('appDetailService').textContent = app.serviceName;
     document.getElementById('appDetailSpecialist').textContent = app.specialistName || 'Любой специалист';
