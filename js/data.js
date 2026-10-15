@@ -39,6 +39,8 @@ const DEFAULT_SPECIALISTS = [
     name: "Александра Иванова",
     role: "Врач-косметолог, дерматовенеролог",
     experience: "Опыт более 9 лет",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
     categories: ["cosmetology", "aesthetic"],
     photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80"
   },
@@ -47,6 +49,8 @@ const DEFAULT_SPECIALISTS = [
     name: "Елена Смирнова",
     role: "Топ-стилист, колорист международного класса",
     experience: "Опыт 11 лет. Сложные техники окрашивания, кудрявый метод",
+    branch: "sever",
+    branchName: "EVO Sever (40 Đ. Bắc Sơn)",
     categories: ["hair"],
     photo: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=600&q=80"
   },
@@ -55,6 +59,8 @@ const DEFAULT_SPECIALISTS = [
     name: "Дмитрий Ветров",
     role: "Шеф-барбер, стилист мужского зала",
     experience: "Опыт 7 лет. Моделирование бород опасным лезвием, спа уход",
+    branch: "sever",
+    branchName: "EVO Sever (40 Đ. Bắc Sơn)",
     categories: ["barber"],
     photo: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=600&q=80"
   },
@@ -63,6 +69,8 @@ const DEFAULT_SPECIALISTS = [
     name: "Мария Соколова",
     role: "Врач-подолог, специалист медицинского педикюра",
     experience: "Опыт 8 лет. Ортониксия (титановая нить), диабетическая стопа",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
     categories: ["podology", "nails"],
     photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80"
   },
@@ -71,6 +79,8 @@ const DEFAULT_SPECIALISTS = [
     name: "Виктория Ким",
     role: "Мастер взгляда и перманентного макияжа",
     experience: "Опыт 6 лет. Натуральные пудровые брови, ламинирование",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
     categories: ["lashes-brows", "permanent", "laser"],
     photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80"
   }
@@ -235,58 +245,134 @@ const DEFAULT_SERVICES = [
   { id: "perm-laser-rem", categoryId: "permanent", subCategory: "Удаление", name: "Лазерное удаление некачественного татуажа", price: 1000000, duration: "30 мин", desc: "Неодимовый пикосекундный лазер. Расщепление пигмента без ожогов и рубцов." }
 ];
 
+function getRelativeDateStr(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const DEFAULT_APPOINTMENTS = [
   {
     id: "EVO-8021",
     clientName: "Екатерина Миронова",
     phone: "+84 98 441 2309",
-    serviceName: "Profhilo",
+    serviceName: "Биоревитализация Profhilo",
+    specialistId: "spec-1",
     specialistName: "Александра Иванова",
-    date: "2026-10-15",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
+    date: getRelativeDateStr(0),
     time: "11:00",
+    duration: "1 ч.",
     price: 8500000,
-    status: "confirmed", // new, confirmed, in_progress, completed, cancelled
+    status: "confirmed", // 🟠 Подтвержденная
     comment: "Впервые на процедуре, чувствительная кожа.",
-    createdAt: "2026-10-14T18:20:00Z"
+    createdAt: new Date().toISOString()
   },
   {
     id: "EVO-8022",
     clientName: "Анастасия Воронова",
     phone: "+84 91 552 8841",
-    serviceName: "Airtouch / Shatush / Балаяж",
+    serviceName: "Airtouch / Сложное окрашивание",
+    specialistId: "spec-2",
     specialistName: "Елена Смирнова",
-    date: "2026-10-15",
-    time: "13:30",
+    branch: "sever",
+    branchName: "EVO Sever (40 Đ. Bắc Sơn)",
+    date: getRelativeDateStr(0),
+    time: "13:00",
+    duration: "3 ч.",
     price: 5000000,
-    status: "in_progress",
+    status: "in_progress", // ⏳ В процессе
     comment: "Длина до лопаток, осветление корней и тонирование холодный блонд.",
-    createdAt: "2026-10-14T19:05:00Z"
+    createdAt: new Date().toISOString()
   },
   {
     id: "EVO-8023",
     clientName: "Максим Орлов",
     phone: "+84 93 112 4099",
     serviceName: "Мужская стрижка с мытьём и стайлингом",
+    specialistId: "spec-3",
     specialistName: "Дмитрий Ветров",
-    date: "2026-10-15",
+    branch: "sever",
+    branchName: "EVO Sever (40 Đ. Bắc Sơn)",
+    date: getRelativeDateStr(0),
     time: "15:00",
+    duration: "1 ч.",
     price: 400000,
-    status: "new",
+    status: "new", // 🟢 Новая
     comment: "Запись через сайт, просит опасное бритье по возможности.",
-    createdAt: "2026-10-15T00:30:00Z"
+    createdAt: new Date().toISOString()
   },
   {
     id: "EVO-8024",
     clientName: "Ольга Ли",
     phone: "+84 97 889 1234",
     serviceName: "Установка коррекционной системы «Титановая нить»",
+    specialistId: "spec-4",
     specialistName: "Мария Соколова",
-    date: "2026-10-16",
-    time: "10:30",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
+    date: getRelativeDateStr(0),
+    time: "09:00",
+    duration: "1 ч.",
     price: 900000,
-    status: "new",
+    status: "completed", // 🔵 Выполнена
     comment: "Беспокоит большой палец левой стопы.",
-    createdAt: "2026-10-15T01:10:00Z"
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "EVO-8025",
+    clientName: "Виктория Белова",
+    phone: "+84 90 334 1122",
+    serviceName: "Пудровое напыление бровей (Powder Brows)",
+    specialistId: "spec-5",
+    specialistName: "Виктория Ким",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
+    date: getRelativeDateStr(0),
+    time: "17:00",
+    duration: "2 ч.",
+    price: 4000000,
+    status: "new", // 🟢 Новая
+    comment: "Новая онлайн-запись через сайт, перезвонить для подтверждения.",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "EVO-8026",
+    clientName: "Артём Смирнов",
+    phone: "+84 93 456 7890",
+    serviceName: "Моделирование и оформление бороды",
+    specialistId: "spec-3",
+    specialistName: "Дмитрий Ветров",
+    branch: "sever",
+    branchName: "EVO Sever (40 Đ. Bắc Sơn)",
+    date: getRelativeDateStr(0),
+    time: "18:00",
+    duration: "45 мин",
+    price: 300000,
+    status: "confirmed", // 🟠 Подтвержденная
+    comment: "Постоянный гость.",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "EVO-8027",
+    clientName: "Ксения Лапина",
+    phone: "+84 95 678 1234",
+    serviceName: "SMAS-лифтинг Ultraformer (Лицо полностью)",
+    specialistId: "spec-1",
+    specialistName: "Александра Иванова",
+    branch: "center",
+    branchName: "EVO Beauty Space (94 Hùng Vương)",
+    date: getRelativeDateStr(1),
+    time: "12:00",
+    duration: "1 ч. 30 мин",
+    price: 9900000,
+    status: "confirmed",
+    comment: "Запись на завтра.",
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -295,8 +381,8 @@ class EvoDataStore {
   constructor() {
     this.STORAGE_KEYS = {
       SERVICES: "evo_services_v1",
-      APPOINTMENTS: "evo_appointments_v1",
-      SPECIALISTS: "evo_specialists_v1",
+      APPOINTMENTS: "evo_appointments_v2",
+      SPECIALISTS: "evo_specialists_v2",
       SALON: "evo_salon_info_v1"
     };
     this.init();
@@ -398,7 +484,7 @@ class EvoDataStore {
     const appointments = this.getAppointments();
     const newRecord = {
       id: "EVO-" + Math.floor(1000 + Math.random() * 9000),
-      status: "new",
+      status: appointmentData.status || "new",
       createdAt: new Date().toISOString(),
       ...appointmentData
     };
@@ -412,6 +498,28 @@ class EvoDataStore {
     const app = appointments.find(a => a.id === id);
     if (app) {
       app.status = newStatus;
+      this.saveAppointments(appointments);
+      return true;
+    }
+    return false;
+  }
+
+  updateAppointment(id, updatedFields) {
+    const appointments = this.getAppointments();
+    const idx = appointments.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      appointments[idx] = { ...appointments[idx], ...updatedFields };
+      this.saveAppointments(appointments);
+      return appointments[idx];
+    }
+    return null;
+  }
+
+  deleteAppointment(id) {
+    let appointments = this.getAppointments();
+    const initLen = appointments.length;
+    appointments = appointments.filter(a => a.id !== id);
+    if (appointments.length !== initLen) {
       this.saveAppointments(appointments);
       return true;
     }
