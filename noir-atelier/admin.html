@@ -84,6 +84,61 @@
       color: #EF4444;
       border: 1px solid rgba(239, 68, 68, 0.4);
     }
+
+    /* Fixed alignment grid for Payroll & Clients to prevent column drifting across browser widths */
+    .payroll-master-row {
+      display: grid;
+      grid-template-columns: minmax(250px, 1.4fr) 70px 140px 140px 190px auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+    }
+    .client-list-row {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.4fr) 80px 140px minmax(170px, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: border-color 0.2s ease;
+    }
+
+    @media (max-width: 1366px) {
+      .payroll-master-row {
+        grid-template-columns: minmax(220px, 1.2fr) 60px 125px 125px 175px auto;
+        gap: 12px;
+      }
+      .client-list-row {
+        grid-template-columns: minmax(220px, 1.2fr) 70px 125px minmax(150px, 1fr) auto;
+        gap: 12px;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .payroll-master-row {
+        grid-template-columns: minmax(200px, 1fr) 55px 115px 115px 165px auto;
+        gap: 10px;
+      }
+      .client-list-row {
+        grid-template-columns: minmax(200px, 1fr) 65px 115px minmax(130px, 1fr) auto;
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .payroll-master-row, .client-list-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+      .payroll-master-row > div, .client-list-row > div {
+        width: 100%;
+      }
+    }
+
   </style>
 </head>
 <body class="admin-body">
