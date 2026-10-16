@@ -955,7 +955,7 @@ button, input, select, textarea {
 }
 
 .modal-card {
-  background: var(--bg-main);
+  background: #0E1118;
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-xl);
   width: 100%;
@@ -963,10 +963,12 @@ button, input, select, textarea {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95);
   overflow: hidden;
   transform: translateY(20px) scale(0.98);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 1001;
 }
 
 .modal-overlay.active .modal-card {
