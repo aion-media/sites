@@ -16,6 +16,7 @@ const DEFAULT_SALON_INFO = {
   telegram: "https://t.me/litt1e_roo",
   instagram: "javascript:void(0)",
   hours: "Ежедневно 10:00 – 21:00",
+  payrollPeriod: "weekly",
   features: [
     "Команда топ-стилистов и экспертов с международным опытом",
     "Премиальная эстетика, приватные рабочие зоны и атмосфера лаунджа",
@@ -58,6 +59,7 @@ const DEFAULT_SPECIALISTS = [
     name: "Alex Gray",
     role: "Арт-директор, ведущий топ-стилист",
     experience: "Опыт 12+ лет. Международная академия Toni&Guy, амбассадор авторских стрижек и полного ребрендинга стиля.",
+    commissionPercent: 45,
     categories: ["men-style", "women-style", "kids-style", "spa-care"],
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
     workDays: [1, 2, 3, 4, 5, 6, 7]
@@ -67,6 +69,7 @@ const DEFAULT_SPECIALISTS = [
     name: "Max Rivera",
     role: "Шеф-барбер, эксперт мужских техник",
     experience: "Опыт 8 лет. Прецизионные Skin Fade, идеальная геометрия бороды и традиционное бритьё опасной бритвой.",
+    commissionPercent: 40,
     categories: ["men-style", "kids-style"],
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
     workDays: [1, 2, 3, 4, 5, 6]
@@ -76,6 +79,7 @@ const DEFAULT_SPECIALISTS = [
     name: "Elena Rostova",
     role: "Топ-стилист, колорист & SPA-эксперт",
     experience: "Опыт 9 лет. Эксперт по текстурным женским стрижкам, вечерним укладкам, Gloss-тонированию и SPA-восстановлению.",
+    commissionPercent: 40,
     categories: ["women-style", "spa-care"],
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
     workDays: [2, 3, 4, 5, 6, 7]
@@ -85,6 +89,7 @@ const DEFAULT_SPECIALISTS = [
     name: "Sofia Vance",
     role: "Стилист детских направлений & SPA-терапевт",
     experience: "Опыт 6 лет. Легкий контакт с детьми любого возраста, модные подростковые стрижки, детокс и массаж головы.",
+    commissionPercent: 35,
     categories: ["kids-style", "spa-care"],
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80",
     workDays: [1, 3, 4, 5, 6, 7]
@@ -387,7 +392,7 @@ function generateDemoAppointments() {
       time: "11:00",
       duration: 60,
       price: 450000,
-      status: "confirmed",
+      status: "completed",
       comment: "Пожелание: текстура сверху, низ под насадку 1.5 мм",
       createdAt: new Date().toISOString()
     },
@@ -404,9 +409,43 @@ function generateDemoAppointments() {
       time: "13:00",
       duration: 75,
       price: 600000,
-      status: "confirmed",
+      status: "completed",
       comment: "Убрать секущиеся концы, сохранить длину у лица",
       createdAt: new Date().toISOString()
+    },
+    {
+      id: "NOIR-099",
+      clientName: "Михаил Воронов",
+      phone: "+7 960 112-44-33",
+      serviceId: "srv-men-4",
+      serviceName: "Камуфляж седины и тонирование + Стрижка",
+      variantName: "Премиум",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      date: daysAgo(2),
+      time: "14:00",
+      duration: 90,
+      price: 750000,
+      status: "completed",
+      comment: "Естественный оттенок, аккуратная окантовка",
+      createdAt: new Date(now - 2 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-098",
+      clientName: "Сергей Лазарев",
+      phone: "+7 903 555-12-88",
+      serviceId: "srv-men-2",
+      serviceName: "Моделирование бороды и усов",
+      variantName: "Стандарт",
+      specialistId: "spec-max",
+      specialistName: "Max Rivera",
+      date: daysAgo(1),
+      time: "16:00",
+      duration: 30,
+      price: 250000,
+      status: "completed",
+      comment: "Четкие контуры щек, масло с сандалом",
+      createdAt: new Date(now - 1 * 86400000).toISOString()
     },
     {
       id: "NOIR-103",
@@ -735,10 +774,22 @@ class NoirDataService {
 
   getSalonInfo() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SALON)) || DEFAULT_SALON_INFO;
+      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SALON));
+      if (stored) {
+        return {
+          ...DEFAULT_SALON_INFO,
+          ...stored,
+          payrollPeriod: stored.payrollPeriod || DEFAULT_SALON_INFO.payrollPeriod || "weekly"
+        };
+      }
+      return DEFAULT_SALON_INFO;
     } catch (e) {
       return DEFAULT_SALON_INFO;
     }
+  }
+
+  saveSalonInfo(info) {
+    localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(info));
   }
 
   getCategories() {
@@ -790,7 +841,16 @@ class NoirDataService {
 
   getSpecialists() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS)) || DEFAULT_SPECIALISTS;
+      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS));
+      if (Array.isArray(stored) && stored.length > 0) {
+        return stored.map(sp => ({
+          ...sp,
+          commissionPercent: (sp.commissionPercent !== undefined && sp.commissionPercent !== null)
+            ? Math.max(0, Math.min(100, parseInt(sp.commissionPercent, 10) || 0))
+            : (sp.id === 'spec-alex' ? 45 : (sp.id === 'spec-sofia' ? 35 : 40))
+        }));
+      }
+      return DEFAULT_SPECIALISTS;
     } catch (e) {
       return DEFAULT_SPECIALISTS;
     }
@@ -807,6 +867,7 @@ class NoirDataService {
       name: spec.name,
       role: spec.role || "Мастер NOIR",
       experience: spec.experience || "",
+      commissionPercent: Math.max(0, Math.min(100, parseInt(spec.commissionPercent, 10) || 40)),
       categories: spec.categories || ["men-style", "women-style"],
       avatar: spec.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
       workDays: spec.workDays || [1, 2, 3, 4, 5, 6, 7]
@@ -820,6 +881,9 @@ class NoirDataService {
     const specialists = this.getSpecialists();
     const idx = specialists.findIndex(s => s.id === id);
     if (idx !== -1) {
+      if (updatedFields.commissionPercent !== undefined) {
+        updatedFields.commissionPercent = Math.max(0, Math.min(100, parseInt(updatedFields.commissionPercent, 10) || 0));
+      }
       specialists[idx] = { ...specialists[idx], ...updatedFields };
       this.saveSpecialists(specialists);
       return specialists[idx];
@@ -1190,6 +1254,108 @@ class NoirDataService {
       this.saveClients(clients);
       return newClient;
     }
+  }
+
+  calculatePayroll({ startDate, endDate, includeConfirmed = false }) {
+    const appointments = this.getAppointments();
+    const specialists = this.getSpecialists();
+
+    // Фильтруем записи по датам и статусам
+    const periodApps = appointments.filter(a => {
+      if (!a.date) return false;
+      if (startDate && a.date < startDate) return false;
+      if (endDate && a.date > endDate) return false;
+      if (a.status === 'cancelled') return false;
+      if (a.status === 'completed') return true;
+      if (includeConfirmed && a.status === 'confirmed') return true;
+      return false;
+    });
+
+    let totalRevenue = 0;
+    let totalPayroll = 0;
+    let totalServicesCount = periodApps.length;
+
+    const masterStats = specialists.map(sp => {
+      const spApps = periodApps.filter(a => {
+        return a.specialistId === sp.id || (a.specialistName && a.specialistName.includes(sp.name));
+      });
+
+      let masterRevenue = 0;
+      let masterEarned = 0;
+      const commissionRate = (sp.commissionPercent !== undefined && sp.commissionPercent !== null) ? sp.commissionPercent : 40;
+
+      const detailedServices = spApps.map(a => {
+        const price = a.price || 0;
+        const masterShare = Math.round(price * commissionRate / 100);
+        masterRevenue += price;
+        masterEarned += masterShare;
+        return {
+          id: a.id,
+          date: a.date,
+          time: a.time,
+          clientName: a.clientName || 'Гость',
+          phone: a.phone || '',
+          serviceName: a.serviceName || 'Услуга',
+          price: price,
+          commissionPercent: commissionRate,
+          masterShare: masterShare,
+          status: a.status
+        };
+      });
+
+      totalRevenue += masterRevenue;
+      totalPayroll += masterEarned;
+
+      return {
+        specialist: sp,
+        servicesCount: spApps.length,
+        revenue: masterRevenue,
+        commissionPercent: commissionRate,
+        earned: masterEarned,
+        salonShare: masterRevenue - masterEarned,
+        services: detailedServices
+      };
+    });
+
+    return {
+      startDate,
+      endDate,
+      totalRevenue,
+      totalPayroll,
+      salonMargin: totalRevenue - totalPayroll,
+      totalServicesCount,
+      summary: {
+        totalRevenue,
+        totalPayroll,
+        salonMargin: totalRevenue - totalPayroll,
+        totalServicesCount
+      },
+      masters: masterStats,
+      specialists: masterStats.map(m => ({
+        specialistId: m.specialist.id,
+        specialistName: m.specialist.name,
+        specialistRole: m.specialist.role,
+        specialistAvatar: m.specialist.avatar,
+        commissionPercent: m.commissionPercent,
+        totalServicesCount: m.servicesCount,
+        grossRevenue: m.revenue,
+        masterPayroll: m.earned,
+        salonMargin: m.salonShare,
+        items: m.services.map(s => ({
+          appointmentId: s.id,
+          date: s.date,
+          time: s.time,
+          clientName: s.clientName,
+          clientPhone: s.phone,
+          serviceName: s.serviceName,
+          price: s.price,
+          status: s.status,
+          commissionPercent: s.commissionPercent,
+          masterShare: s.masterShare,
+          salonShare: s.price - s.masterShare
+        }))
+      }))
+    };
   }
 
   formatMoney(amount) {
