@@ -207,8 +207,13 @@ function loadDashboard() {
   switchTab(currentTab);
 
   const urlParams = new URLSearchParams(window.location.search);
+  const targetTab = urlParams.get('tab');
   const openSpec = urlParams.get('openSpec');
   const addSpec = urlParams.get('addSpec');
+
+  if (targetTab) {
+    switchTab(targetTab);
+  }
 
   if (openSpec) {
     switchTab('specialists');
@@ -225,25 +230,31 @@ function loadDashboard() {
 
 function updateKPIs() {
   const appointments = window.noirData.getAppointments();
-  const specialists = window.noirData.getSpecialists();
   const today = new Date().toISOString().split('T')[0];
 
-  const todayApps = appointments.filter(a => a.date === today && a.status !== 'cancelled');
-  const todayTotalRevenue = todayApps.reduce((acc, a) => acc + (a.price || 0), 0);
+  // 1. Новые заявки (требуют подтверждения)
   const newRequests = appointments.filter(a => a.status === 'new').length;
 
-  const totalSlots = specialists.length * 11; // 10:00 - 20:00
-  const occupancyRate = totalSlots > 0 ? Math.round((todayApps.length / totalSlots) * 100) : 0;
+  // 2. Записей на сегодня (подтверждённые и выполненные визиты на сегодня)
+  const todayConfirmedApps = appointments.filter(a => a.date === today && (a.status === 'confirmed' || a.status === 'completed'));
+  const todayCount = todayConfirmedApps.length;
 
+  // 3. Выручка сегодня (сумма подтверждённых броней на сегодня)
+  const todayConfirmedRevenue = todayConfirmedApps.reduce((acc, a) => acc + (a.price || 0), 0);
+
+  // 4. В кассе / Оплачено (сумма по выполненным записям за сегодня)
+  const todayCompletedApps = appointments.filter(a => a.date === today && a.status === 'completed');
+  const todayCashRevenue = todayCompletedApps.reduce((acc, a) => acc + (a.price || 0), 0);
+
+  const kpiNewCount = document.getElementById('kpiNewRequestsCount');
   const kpiTodayCount = document.getElementById('kpiTodayCount');
   const kpiTodayRev = document.getElementById('kpiTodayRevenue');
-  const kpiOccupancy = document.getElementById('kpiOccupancy');
-  const kpiNewCount = document.getElementById('kpiNewRequestsCount');
+  const kpiCashRev = document.getElementById('kpiCashRevenue');
 
-  if (kpiTodayCount) kpiTodayCount.textContent = todayApps.length;
-  if (kpiTodayRev) kpiTodayRev.textContent = window.noirData.formatMoney(todayTotalRevenue);
-  if (kpiOccupancy) kpiOccupancy.textContent = `${occupancyRate}%`;
   if (kpiNewCount) kpiNewCount.textContent = newRequests;
+  if (kpiTodayCount) kpiTodayCount.textContent = todayCount;
+  if (kpiTodayRev) kpiTodayRev.textContent = window.noirData.formatMoney(todayConfirmedRevenue);
+  if (kpiCashRev) kpiCashRev.textContent = window.noirData.formatMoney(todayCashRevenue);
 }
 
 // ==========================================
@@ -582,10 +593,10 @@ function renderJournal() {
 
   let html = '';
   filtered.forEach(a => {
-    let statusBadge = `<span class="badge-status badge-status-confirmed">Подтверждена</span>`;
-    if (a.status === 'new') statusBadge = `<span class="badge-status badge-status-new">Новая</span>`;
-    if (a.status === 'completed') statusBadge = `<span class="badge-status badge-status-completed">Выполнена</span>`;
-    if (a.status === 'cancelled') statusBadge = `<span class="badge-status badge-status-cancelled">Отменена</span>`;
+    let statusClass = 'badge-status-confirmed';
+    if (a.status === 'new') statusClass = 'badge-status-new';
+    if (a.status === 'completed') statusClass = 'badge-status-completed';
+    if (a.status === 'cancelled') statusClass = 'badge-status-cancelled';
 
     html += `
       <tr>
@@ -603,7 +614,14 @@ function renderJournal() {
           <div style="font-weight: 600; color: #FFFFFF;">${a.date}</div>
           <div style="font-size: 11px; color: var(--accent-gold); font-family: var(--font-mono);">${a.time}</div>
         </td>
-        <td>${statusBadge}</td>
+        <td>
+          <select class="status-select ${statusClass}" onchange="handleQuickStatusChange('${a.id}', this.value)" title="Быстрая смена статуса записи">
+            <option value="new" ${a.status === 'new' ? 'selected' : ''}>Новая</option>
+            <option value="confirmed" ${a.status === 'confirmed' ? 'selected' : ''}>Подтверждена</option>
+            <option value="completed" ${a.status === 'completed' ? 'selected' : ''}>Выполнена</option>
+            <option value="cancelled" ${a.status === 'cancelled' ? 'selected' : ''}>Отменена</option>
+          </select>
+        </td>
         <td style="text-align: right;">
           <button type="button" class="btn btn-secondary" onclick="openEditAppointmentModal('${a.id}')" style="padding: 4px 10px; font-size: 12px;">
             Изменить
@@ -615,6 +633,13 @@ function renderJournal() {
 
   tbody.innerHTML = html;
 }
+
+window.handleQuickStatusChange = function(appId, newStatus) {
+  window.noirData.updateAppointmentStatus(appId, newStatus);
+  updateKPIs();
+  renderJournal();
+  if (currentTab === 'timeline') renderTimeline();
+};
 
 // ==========================================
 // 4. ПРЕЙСКУРАНТ / УСЛУГИ АДМИН
