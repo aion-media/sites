@@ -340,6 +340,55 @@
     </div>
   </footer>
 
+  <!-- Service Detail Modal ("О процедуре") -->
+  <div class="modal-overlay" id="serviceDetailModal">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span id="modalDetailCategory" style="color: var(--accent-gold); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; display: block; margin-bottom: 4px;">Услуга</span>
+          <h3 id="modalDetailTitle" style="font-size: 21px; font-weight: 800; color: #FFFFFF;">Название процедуры</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="serviceDetailModalClose">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px 30px;">
+        <!-- Meta info row -->
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; font-size: 13px; color: var(--text-dim);">
+          <span id="modalDetailDuration" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); font-weight: 600;">⏱️ 60 мин</span>
+          <span>•</span>
+          <span style="color: var(--color-success); font-weight: 700;">Премиальный протокол</span>
+        </div>
+
+        <!-- Full description -->
+        <div id="modalDetailDesc" style="font-size: 14.5px; color: var(--text-sub); line-height: 1.7; margin-bottom: 24px;">
+          Описание процедуры
+        </div>
+
+        <!-- "В стоимость процедуры входит:" card -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-md); padding: 20px;">
+          <h4 style="font-size: 12px; font-weight: 800; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px;">
+            В стоимость процедуры входит:
+          </h4>
+          <ul id="modalDetailIncludesList" style="list-style: none; display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0;">
+            <!-- Rendered dynamically -->
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 30px; background: var(--bg-surface); border-top: 1px solid var(--border-subtle);">
+        <div>
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Стоимость</div>
+          <div id="modalDetailPrice" style="font-size: 20px; font-weight: 900; color: var(--accent-gold);">
+            0 ₫
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="modalDetailBookBtn" style="padding: 12px 28px; font-size: 14px;">
+          Записаться
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Booking Wizard Modal (5 Steps) -->
   <div class="modal-overlay" id="bookingModal">
     <div class="modal-card">

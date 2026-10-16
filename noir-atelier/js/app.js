@@ -14,6 +14,7 @@ function initApp() {
   renderSpecialistsGrid();
   setupFAQ();
   setupSmoothScroll();
+  setupServiceDetailModal();
 }
 
 function renderCategoryTabs() {
@@ -91,8 +92,8 @@ function renderServicesGrid() {
         </div>
 
         <div class="service-footer">
-          <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="openBookingModal('${s.id}')">
-            Выбрать время →
+          <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="openServiceDetailModal('${s.id}')">
+            О процедуре
           </button>
           <button type="button" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px;" onclick="openBookingModal('${s.id}')">
             Записаться
@@ -169,3 +170,73 @@ function setupSmoothScroll() {
     });
   });
 }
+
+function setupServiceDetailModal() {
+  const modal = document.getElementById('serviceDetailModal');
+  const closeBtn = document.getElementById('serviceDetailModalClose');
+
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+      }
+    });
+  }
+}
+
+window.openServiceDetailModal = function(serviceId) {
+  const services = window.noirData.getServices();
+  const srv = services.find(s => s.id === serviceId);
+  if (!srv) return;
+
+  const categories = window.noirData.getCategories();
+  const cat = categories.find(c => c.id === srv.categoryId);
+
+  const modal = document.getElementById('serviceDetailModal');
+  const title = document.getElementById('modalDetailTitle');
+  const catEl = document.getElementById('modalDetailCategory');
+  const durEl = document.getElementById('modalDetailDuration');
+  const descEl = document.getElementById('modalDetailDesc');
+  const includesList = document.getElementById('modalDetailIncludesList');
+  const priceEl = document.getElementById('modalDetailPrice');
+  const bookBtn = document.getElementById('modalDetailBookBtn');
+
+  if (title) title.textContent = srv.name;
+  if (catEl) catEl.textContent = cat ? cat.name : "Услуга ателье";
+  if (durEl) durEl.textContent = `⏱️ ${srv.duration || 60} минут`;
+  if (descEl) descEl.textContent = srv.fullDesc || srv.shortDesc;
+  if (priceEl) priceEl.textContent = window.noirData.formatMoney(srv.price);
+
+  if (includesList) {
+    const items = srv.includes && srv.includes.length > 0 ? srv.includes : [
+      "Индивидуальная консультация топ-стилиста",
+      "Двойное мытьё головы профессиональным шампунем",
+      "Проведение процедуры по протоколу ателье NOIR",
+      "Финишный премиальный стайлинг и уход",
+      "Чашка кофе или напиток из коллекции Atelier Bar"
+    ];
+
+    includesList.innerHTML = items.map(inc => `
+      <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--text-sub); line-height: 1.5;">
+        <span style="color: var(--accent-gold); font-size: 14px; font-weight: 800; line-height: 1.4; flex-shrink: 0;">✓</span>
+        <span>${inc}</span>
+      </li>
+    `).join('');
+  }
+
+  if (bookBtn) {
+    bookBtn.onclick = () => {
+      modal.classList.remove('active');
+      openBookingModal(srv.id);
+    };
+  }
+
+  modal.classList.add('active');
+};
+
