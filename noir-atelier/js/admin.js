@@ -59,6 +59,10 @@ function setupAuth() {
   const href = window.location.href;
   const isAutoLogin = href.includes('autologin=1');
 
+  if (href.includes('openRecovery=1')) {
+    openPinRecoveryModal();
+  }
+
   try {
     if (isAutoLogin) {
       sessionStorage.setItem('noir_admin_auth', 'true');
@@ -80,21 +84,160 @@ function setupAuth() {
     return;
   }
 
+
   if (pinForm) {
     pinForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (pinInput.value === ADMIN_PIN) {
+      const entered = pinInput ? pinInput.value.trim() : '';
+      const isValid = window.noirData ? window.noirData.verifyAdminPin(entered) : (entered === "1234");
+      
+      if (isValid) {
         sessionStorage.setItem('noir_admin_auth', 'true');
         pinScreen.style.display = 'none';
         mainLayout.style.display = 'flex';
         loadDashboard();
       } else {
         if (pinError) pinError.style.display = 'block';
-        pinInput.value = '';
+        if (pinInput) pinInput.value = '';
       }
     });
   }
 }
+
+// ==========================================
+// УПРАВЛЕНИЕ PIN-КОДОМ И ВОССТАНОВЛЕНИЕ ДОСТУПА
+// ==========================================
+
+function openPinRecoveryModal() {
+  const modal = document.getElementById('pinRecoveryModal');
+  const notice = document.getElementById('recoverySuccessNotice');
+  if (notice) notice.style.display = 'none';
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+window.openPinRecoveryModal = openPinRecoveryModal;
+
+function closePinRecoveryModal() {
+  const modal = document.getElementById('pinRecoveryModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+window.closePinRecoveryModal = closePinRecoveryModal;
+
+function confirmResetPinToDefault() {
+  if (window.noirData) {
+    window.noirData.resetAdminPinToDefault();
+  }
+  const notice = document.getElementById('recoverySuccessNotice');
+  if (notice) {
+    notice.style.display = 'block';
+  }
+  const pinInput = document.getElementById('pinInput');
+  if (pinInput) pinInput.value = '1234';
+  const pinError = document.getElementById('pinErrorMsg');
+  if (pinError) pinError.style.display = 'none';
+  setTimeout(() => {
+    closePinRecoveryModal();
+  }, 1200);
+}
+window.confirmResetPinToDefault = confirmResetPinToDefault;
+
+function openPinChangeModal() {
+  const modal = document.getElementById('adminPinChangeModal');
+  const err = document.getElementById('pinChangeErrorMsg');
+  const succ = document.getElementById('pinChangeSuccessMsg');
+  if (err) err.style.display = 'none';
+  if (succ) succ.style.display = 'none';
+  
+  const curInp = document.getElementById('currentPinInput');
+  const newInp = document.getElementById('newPinInput');
+  const confInp = document.getElementById('confirmNewPinInput');
+  if (curInp) curInp.value = '';
+  if (newInp) newInp.value = '';
+  if (confInp) confInp.value = '';
+
+  const sec = window.noirData ? window.noirData.getSecurityInfo() : null;
+  const emailInp = document.getElementById('changeOwnerEmailInput');
+  if (emailInp && sec && sec.ownerEmail) {
+    emailInp.value = sec.ownerEmail;
+  }
+
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+}
+window.openPinChangeModal = openPinChangeModal;
+
+function closePinChangeModal() {
+  const modal = document.getElementById('adminPinChangeModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+window.closePinChangeModal = closePinChangeModal;
+
+
+function handleAdminPinChangeSubmit(e) {
+  e.preventDefault();
+  const curVal = document.getElementById('currentPinInput').value.trim();
+  const newVal = document.getElementById('newPinInput').value.trim();
+  const confVal = document.getElementById('confirmNewPinInput').value.trim();
+  const emailVal = document.getElementById('changeOwnerEmailInput') ? document.getElementById('changeOwnerEmailInput').value.trim() : '';
+  const errEl = document.getElementById('pinChangeErrorMsg');
+  const succEl = document.getElementById('pinChangeSuccessMsg');
+
+  if (errEl) errEl.style.display = 'none';
+  if (succEl) succEl.style.display = 'none';
+
+  // 1. Проверяем текущий PIN
+  const isCurValid = window.noirData ? window.noirData.verifyAdminPin(curVal) : (curVal === "1234");
+  if (!isCurValid) {
+    if (errEl) {
+      errEl.textContent = "Неверный текущий PIN-код! Проверьте и попробуйте снова.";
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // 2. Проверяем формат нового PIN
+  if (!/^\d{4,8}$/.test(newVal)) {
+    if (errEl) {
+      errEl.textContent = "Новый PIN-код должен содержать от 4 до 8 цифр.";
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // 3. Сверяем подтверждение
+  if (newVal !== confVal) {
+    if (errEl) {
+      errEl.textContent = "Новый PIN-код и подтверждение не совпадают.";
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // 4. Сохраняем в базу
+  if (window.noirData) {
+    window.noirData.updateAdminPin(newVal, emailVal);
+  }
+
+  if (succEl) {
+    succEl.style.display = 'block';
+  }
+
+  setTimeout(() => {
+    closePinChangeModal();
+  }, 1000);
+}
+window.handleAdminPinChangeSubmit = handleAdminPinChangeSubmit;
+
 
 function setupNav() {
   const navItems = document.querySelectorAll('.admin-nav-item[data-tab]');
@@ -315,7 +458,13 @@ function loadDashboard() {
     switchTab('payroll');
     openPayrollHelpModal();
   }
+
+  const openPinChange = urlParams.get('openPinChange');
+  if (openPinChange || href.includes('openPinChange=1')) {
+    openPinChangeModal();
+  }
 }
+
 
 function updateKPIs() {
   const appointments = window.noirData.getAppointments();
