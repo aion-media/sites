@@ -33,6 +33,7 @@ function setupLiveSync() {
       if (currentTab === 'appointments') renderJournal();
       if (currentTab === 'services') renderServicesAdmin();
       if (currentTab === 'clients') renderClientsAdmin();
+      if (currentTab === 'payroll') renderPayrollAdmin();
     }
   });
 
@@ -44,6 +45,7 @@ function setupLiveSync() {
     if (currentTab === 'appointments') renderJournal();
     if (currentTab === 'services') renderServicesAdmin();
     if (currentTab === 'clients') renderClientsAdmin();
+    if (currentTab === 'payroll') renderPayrollAdmin();
   });
 }
 
@@ -205,6 +207,7 @@ function switchTab(tabId) {
   if (tabId === 'appointments') renderJournal();
   if (tabId === 'services') renderServicesAdmin();
   if (tabId === 'clients') renderClientsAdmin();
+  if (tabId === 'payroll') renderPayrollAdmin();
 }
 
 function loadDashboard() {
@@ -257,6 +260,15 @@ function loadDashboard() {
     switchTab('clients');
     setTimeout(() => {
       openCreateClientModal();
+    }, 150);
+  }
+
+  const expandPayroll = urlParams.get('expandPayroll');
+  if (expandPayroll) {
+    switchTab('payroll');
+    setTimeout(() => {
+      expandedPayrollMasters[expandPayroll === '1' ? 'spec-alex' : expandPayroll] = true;
+      renderPayrollAdmin();
     }, 150);
   }
 }
@@ -1055,6 +1067,7 @@ function setupModals() {
       const role = document.getElementById('specEditRole').value.trim();
       const exp = document.getElementById('specEditExperience').value.trim();
       const avatar = document.getElementById('specEditAvatar').value.trim() || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+      const commissionPercent = parseInt(document.getElementById('specEditCommission').value, 10) || 40;
 
       // Собираем категории
       const selectedCats = [];
@@ -1079,7 +1092,8 @@ function setupModals() {
           experience: exp,
           avatar,
           categories: finalCategories,
-          workDays: finalWorkDays
+          workDays: finalWorkDays,
+          commissionPercent
         });
       } else {
         // Создание нового мастера
@@ -1089,7 +1103,8 @@ function setupModals() {
           experience: exp,
           avatar,
           categories: finalCategories,
-          workDays: finalWorkDays
+          workDays: finalWorkDays,
+          commissionPercent
         });
       }
 
@@ -1098,6 +1113,7 @@ function setupModals() {
       updateKPIs();
       renderSpecialistsSchedule();
       renderTimeline();
+      if (currentTab === 'payroll') renderPayrollAdmin();
     });
   }
 
@@ -1244,6 +1260,8 @@ window.openCreateSpecialistModal = function() {
   document.getElementById('specEditRole').value = "";
   document.getElementById('specEditExperience').value = "";
   document.getElementById('specEditAvatar').value = "";
+  const commInput = document.getElementById('specEditCommission');
+  if (commInput) commInput.value = "40";
 
   populateCategoryCheckboxes([]);
   document.querySelectorAll('#specWorkDaysCheckboxes input').forEach(ch => ch.checked = true);
@@ -1265,6 +1283,8 @@ window.openEditSpecialistModal = function(specId) {
   document.getElementById('specEditRole').value = spec.role;
   document.getElementById('specEditExperience').value = spec.experience || "";
   document.getElementById('specEditAvatar').value = spec.avatar || "";
+  const commInput = document.getElementById('specEditCommission');
+  if (commInput) commInput.value = spec.commissionPercent != null ? spec.commissionPercent : 40;
 
   populateCategoryCheckboxes(spec.categories || []);
 
@@ -1274,6 +1294,11 @@ window.openEditSpecialistModal = function(specId) {
   });
 
   modal.classList.add('active');
+};
+
+window.setSpecCommission = function(val) {
+  const commInput = document.getElementById('specEditCommission');
+  if (commInput) commInput.value = val;
 };
 
 function populateCategoryCheckboxes(selectedCategories = []) {
@@ -1860,5 +1885,321 @@ window.openCreateClientModal = function() {
 
   modal.classList.add('active');
 };
+
+// ==========================================
+// 8. ЗАРПЛАТНАЯ ВЕДОМОСТЬ МАСТЕРОВ (PAYROLL)
+// ==========================================
+let payrollPeriodMode = 'weekly'; // 'today', 'weekly', 'lastweek', 'month'
+let payrollWeekOffset = 0;
+let payrollIncludeConfirmed = false;
+const expandedPayrollMasters = {};
+
+function getPayrollDateRange() {
+  let now = new Date();
+  const apps = window.noirData.getAppointments();
+  if (apps && apps.length > 0) {
+    const dates = apps.map(a => a.date).sort();
+    const latestDateStr = dates[dates.length - 1];
+    if (latestDateStr) {
+      now = new Date(latestDateStr + 'T12:00:00');
+    }
+  }
+
+  let startDateStr = '';
+  let endDateStr = '';
+  let label = '';
+
+  if (payrollPeriodMode === 'today') {
+    const target = new Date(now);
+    target.setDate(target.getDate() + payrollWeekOffset);
+    startDateStr = target.toISOString().split('T')[0];
+    endDateStr = startDateStr;
+    const isBase = payrollWeekOffset === 0;
+    label = target.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'short' }) + (isBase ? ' (Сегодня)' : '');
+  } else if (payrollPeriodMode === 'weekly' || payrollPeriodMode === 'lastweek') {
+    const target = new Date(now);
+    const dayOfWeek = target.getDay() === 0 ? 7 : target.getDay();
+    target.setDate(target.getDate() - (dayOfWeek - 1) + (payrollWeekOffset * 7));
+
+    const mon = new Date(target);
+    const sun = new Date(target);
+    sun.setDate(mon.getDate() + 6);
+
+    startDateStr = mon.toISOString().split('T')[0];
+    endDateStr = sun.toISOString().split('T')[0];
+
+    const monFmt = mon.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    const sunFmt = sun.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    const weekNote = payrollWeekOffset === 0 ? ' (Текущая неделя)' : (payrollWeekOffset === -1 ? ' (Прошлая неделя)' : '');
+    label = `${monFmt} — ${sunFmt}${weekNote}`;
+  } else if (payrollPeriodMode === 'month') {
+    const target = new Date(now);
+    target.setMonth(target.getMonth() + payrollWeekOffset);
+    const y = target.getFullYear();
+    const m = target.getMonth();
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m + 1, 0);
+
+    startDateStr = firstDay.toISOString().split('T')[0];
+    endDateStr = lastDay.toISOString().split('T')[0];
+
+    const monthName = target.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    label = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  }
+
+  return { startDate: startDateStr, endDate: endDateStr, label };
+}
+
+window.setPayrollPeriod = function(mode) {
+  payrollPeriodMode = mode;
+  if (mode === 'today') {
+    payrollWeekOffset = 0;
+  } else if (mode === 'weekly') {
+    payrollWeekOffset = 0;
+  } else if (mode === 'lastweek') {
+    payrollPeriodMode = 'weekly';
+    payrollWeekOffset = -1;
+  } else if (mode === 'month') {
+    payrollWeekOffset = 0;
+  }
+
+  // Обновляем визуальное состояние кнопок
+  document.querySelectorAll('.payroll-period-btn').forEach(btn => {
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+  });
+
+  const activeBtnId = mode === 'lastweek' ? 'payrollPeriodBtn_lastweek' : `payrollPeriodBtn_${mode}`;
+  const activeBtn = document.getElementById(activeBtnId);
+  if (activeBtn) {
+    activeBtn.classList.remove('btn-secondary');
+    activeBtn.classList.add('btn-primary');
+  }
+
+  renderPayrollAdmin();
+};
+
+window.navigatePayrollPeriod = function(dir) {
+  payrollWeekOffset += dir;
+  renderPayrollAdmin();
+};
+
+window.togglePayrollIncludeConfirmed = function(checked) {
+  payrollIncludeConfirmed = checked;
+  renderPayrollAdmin();
+};
+
+window.changeSalonDefaultPayrollPeriod = function(val) {
+  window.noirData.saveSalonInfo({ payrollPeriod: val });
+  const select = document.getElementById('salonPayrollPeriodSelect');
+  if (select) select.value = val;
+  const sub = document.getElementById('payrollSubHeader');
+  if (sub) {
+    const periodName = val === 'weekly' ? 'раз в неделю' : 'каждый день';
+    sub.innerHTML = `Регламент выплат: <strong style="color: var(--accent-gold);">${periodName}</strong>. Начисления по выполненным услугам и процентная ставка каждого мастера.`;
+  }
+};
+
+window.toggleMasterPayrollDetails = function(specId) {
+  expandedPayrollMasters[specId] = !expandedPayrollMasters[specId];
+  renderPayrollAdmin();
+};
+
+window.toggleMasterPayoutStatus = function(specId, startDate, endDate) {
+  const key = `noir_payout_${specId}_${startDate}_${endDate}`;
+  const current = localStorage.getItem(key);
+  if (current === 'paid') {
+    localStorage.removeItem(key);
+  } else {
+    localStorage.setItem(key, 'paid');
+  }
+  renderPayrollAdmin();
+};
+
+function renderPayrollAdmin() {
+  const container = document.getElementById('payrollTableContainer');
+  if (!container) return;
+
+  const dateRange = getPayrollDateRange();
+
+  // Обновляем плашку периода
+  const labelEl = document.getElementById('payrollCurrentPeriodLabel');
+  if (labelEl) labelEl.textContent = dateRange.label;
+
+  // Селектор периодичности салона
+  const salonInfo = window.noirData.getSalonInfo();
+  const salonPeriodSelect = document.getElementById('salonPayrollPeriodSelect');
+  if (salonPeriodSelect && salonInfo.payrollPeriod) {
+    salonPeriodSelect.value = salonInfo.payrollPeriod;
+  }
+
+  // Расчёт ведомости
+  const payrollData = window.noirData.calculatePayroll({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    includeConfirmed: payrollIncludeConfirmed
+  });
+
+  // Обновляем KPI
+  const revEl = document.getElementById('payrollKpiTotalRevenue');
+  const payEl = document.getElementById('payrollKpiTotalPayroll');
+  const marginEl = document.getElementById('payrollKpiSalonMargin');
+  const countEl = document.getElementById('payrollKpiServicesCount');
+
+  if (revEl) revEl.textContent = window.noirData.formatMoney(payrollData.summary.totalRevenue);
+  if (payEl) payEl.textContent = window.noirData.formatMoney(payrollData.summary.totalPayroll);
+  if (marginEl) marginEl.textContent = window.noirData.formatMoney(payrollData.summary.salonMargin);
+  if (countEl) countEl.textContent = payrollData.summary.totalServicesCount;
+
+  // Отрисовка списка мастеров
+  if (!payrollData.specialists || payrollData.specialists.length === 0) {
+    container.innerHTML = `
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 36px; text-align: center; color: var(--text-dim);">
+        В базе нет зарегистрированных мастеров.
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+
+  payrollData.specialists.forEach(sp => {
+    const isExpanded = !!expandedPayrollMasters[sp.specialistId];
+    const payoutKey = `noir_payout_${sp.specialistId}_${dateRange.startDate}_${dateRange.endDate}`;
+    const isPaid = localStorage.getItem(payoutKey) === 'paid';
+
+    html += `
+      <div style="background: var(--bg-card); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.35)' : 'var(--border-subtle)'}; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s ease;">
+        <!-- Основная строка мастера -->
+        <div style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: ${isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent'};">
+          <!-- Левая часть: фото и данные мастера -->
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 240px;">
+            <img src="${sp.specialistAvatar}" alt="${sp.specialistName}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid ${isPaid ? '#10B981' : 'var(--accent-gold)'};">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">${sp.specialistName}</h4>
+                <span style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.3); padding: 2px 7px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 800;">
+                  ${sp.commissionPercent}% ставка
+                </span>
+                ${isPaid ? `
+                  <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700;">
+                    ✓ Выплачено
+                  </span>
+                ` : ''}
+              </div>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 3px;">${sp.specialistRole}</p>
+            </div>
+          </div>
+
+          <!-- Показатели начислений мастера -->
+          <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Услуг</div>
+              <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${sp.totalServicesCount}</div>
+            </div>
+
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Касса мастера</div>
+              <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${window.noirData.formatMoney(sp.grossRevenue)}</div>
+            </div>
+
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Доход салона</div>
+              <div style="font-size: 14px; font-weight: 700; color: #10B981; margin-top: 2px;">${window.noirData.formatMoney(sp.salonMargin)}</div>
+            </div>
+
+            <div style="text-align: right; background: rgba(212, 175, 55, 0.08); padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.25);">
+              <div style="font-size: 11px; color: var(--accent-gold); text-transform: uppercase; font-weight: 700;">К выплате мастеру</div>
+              <div style="font-size: 18px; font-weight: 900; color: var(--accent-gold); margin-top: 1px;">
+                ${window.noirData.formatMoney(sp.masterPayroll)}
+              </div>
+            </div>
+          </div>
+
+          <!-- Действия -->
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn btn-secondary" onclick="toggleMasterPayrollDetails('${sp.specialistId}')" style="padding: 7px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+              <span>Детализация (${sp.totalServicesCount})</span>
+              <span style="font-size: 10px; transition: transform 0.2s ease; ${isExpanded ? 'transform: rotate(180deg);' : ''}">▼</span>
+            </button>
+
+            ${isPaid ? `
+              <button type="button" class="btn" onclick="toggleMasterPayoutStatus('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 14px; font-size: 12px; font-weight: 700;">
+                ✓ Выплачено
+              </button>
+            ` : `
+              <button type="button" class="btn btn-primary" onclick="toggleMasterPayoutStatus('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="padding: 7px 14px; font-size: 12px; font-weight: 700;" ${sp.masterPayroll === 0 ? 'disabled style="opacity: 0.5;"' : ''}>
+                Выплатить
+              </button>
+            `}
+          </div>
+        </div>
+
+        <!-- Разворачиваемая таблица услуг -->
+        ${isExpanded ? `
+          <div style="border-top: 1px solid var(--border-subtle); padding: 14px 20px; background: rgba(0, 0, 0, 0.25);">
+            ${sp.items.length === 0 ? `
+              <div style="font-size: 12px; color: var(--text-dim); text-align: center; padding: 16px;">
+                В выбранный период у мастера нет записей с подходящим статусом.
+              </div>
+            ` : `
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-dim);">
+                      <th style="padding: 8px 10px; font-weight: 600;">Дата и время</th>
+                      <th style="padding: 8px 10px; font-weight: 600;">Клиент</th>
+                      <th style="padding: 8px 10px; font-weight: 600;">Услуга</th>
+                      <th style="padding: 8px 10px; font-weight: 600; text-align: right;">Оплачено гостем</th>
+                      <th style="padding: 8px 10px; font-weight: 600; text-align: center;">Ставка</th>
+                      <th style="padding: 8px 10px; font-weight: 600; text-align: right;">Мастеру (${sp.commissionPercent}%)</th>
+                      <th style="padding: 8px 10px; font-weight: 600; text-align: right;">Салону</th>
+                      <th style="padding: 8px 10px; font-weight: 600; text-align: center;">Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${sp.items.map(it => `
+                      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #FFFFFF;">
+                        <td style="padding: 10px 10px; font-weight: 600; white-space: nowrap;">
+                          ${it.date} в ${it.time}
+                        </td>
+                        <td style="padding: 10px 10px;">
+                          <div style="font-weight: 600;">${it.clientName}</div>
+                          <div style="font-size: 11px; color: var(--text-dim);">${it.clientPhone}</div>
+                        </td>
+                        <td style="padding: 10px 10px; color: var(--accent-gold-light); font-weight: 600;">
+                          ${it.serviceName}
+                        </td>
+                        <td style="padding: 10px 10px; text-align: right; font-weight: 700;">
+                          ${window.noirData.formatMoney(it.price)}
+                        </td>
+                        <td style="padding: 10px 10px; text-align: center; color: var(--text-dim);">
+                          ${it.commissionPercent}%
+                        </td>
+                        <td style="padding: 10px 10px; text-align: right; font-weight: 800; color: var(--accent-gold);">
+                          ${window.noirData.formatMoney(it.masterShare)}
+                        </td>
+                        <td style="padding: 10px 10px; text-align: right; color: #10B981; font-weight: 700;">
+                          ${window.noirData.formatMoney(it.salonShare)}
+                        </td>
+                        <td style="padding: 10px 10px; text-align: center;">
+                          <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; background: ${it.status === 'completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)'}; color: ${it.status === 'completed' ? '#10B981' : '#60A5FA'}; border: 1px solid ${it.status === 'completed' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
+                            ${it.status === 'completed' ? 'Выполнена' : 'Подтверждена'}
+                          </span>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
 
 
