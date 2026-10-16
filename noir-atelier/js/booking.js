@@ -11,7 +11,10 @@ let bookingState = {
   step: 1,
   serviceId: null,
   serviceName: "",
+  basePrice: 0,
   price: 0,
+  discountPercent: 0,
+  loyaltyClient: null,
   duration: 60,
   specialistId: "any",
   specialistName: "Любой свободный мастер",
@@ -25,6 +28,38 @@ let bookingState = {
 function initBookingWizard() {
   setupWizardTriggers();
   setupWizardNavigation();
+
+  const phoneInput = document.getElementById('bookingClientPhone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', () => {
+      handleBookingPhoneLookup();
+    });
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const openBookingParam = urlParams.get('openBooking');
+  if (openBookingParam) {
+    const srvId = urlParams.get('serviceId') || 'srv-men-1';
+    const specId = urlParams.get('specId') || 'any';
+    openBookingModal(srvId, specId);
+
+    const targetStep = parseInt(urlParams.get('step'), 10);
+    if (targetStep && targetStep > 1) {
+      if (targetStep >= 3) {
+        bookingState.time = urlParams.get('time') || '14:00';
+      }
+      goToStep(targetStep);
+
+      const phoneParam = urlParams.get('phone');
+      if (phoneParam) {
+        const phoneInp = document.getElementById('bookingClientPhone');
+        if (phoneInp) {
+          phoneInp.value = phoneParam;
+          handleBookingPhoneLookup();
+        }
+      }
+    }
+  }
 }
 
 function setupWizardTriggers() {
@@ -65,7 +100,10 @@ window.openBookingModal = function(preselectedServiceId = null, preselectedSpecI
     step: 1,
     serviceId: preselectedServiceId || null,
     serviceName: "",
+    basePrice: 0,
     price: 0,
+    discountPercent: 0,
+    loyaltyClient: null,
     duration: 60,
     specialistId: preselectedSpecId || "any",
     specialistName: "Любой свободный мастер",
@@ -81,6 +119,7 @@ window.openBookingModal = function(preselectedServiceId = null, preselectedSpecI
     const srv = services.find(s => s.id === preselectedServiceId);
     if (srv) {
       bookingState.serviceName = srv.name;
+      bookingState.basePrice = srv.price;
       bookingState.price = srv.price;
       bookingState.duration = srv.duration || 60;
     }
@@ -146,6 +185,7 @@ function goToStep(stepNumber) {
   if (stepNumber === 3) {
     updateTimeSlots();
   } else if (stepNumber === 4) {
+    handleBookingPhoneLookup();
     renderStep4Summary();
   }
 }
@@ -209,6 +249,13 @@ function handleNextStep() {
     bookingState.phone = phone;
     bookingState.comment = comment;
 
+    let finalComment = bookingState.comment;
+    if (bookingState.discountPercent > 0) {
+      const discountAmount = Math.round(bookingState.basePrice * bookingState.discountPercent / 100);
+      const discountNote = `Лояльность: скидка ${bookingState.discountPercent}% (-${window.noirData.formatMoney(discountAmount)})`;
+      finalComment = finalComment ? (finalComment + ' | ' + discountNote) : discountNote;
+    }
+
     // Сохраняем в базу LocalStorage
     const newRecord = window.noirData.addAppointment({
       clientName: bookingState.clientName,
@@ -221,7 +268,8 @@ function handleNextStep() {
       time: bookingState.time,
       duration: bookingState.duration,
       price: bookingState.price,
-      comment: bookingState.comment
+      discountPercent: bookingState.discountPercent,
+      comment: finalComment
     });
 
     renderStep5Success(newRecord);
@@ -343,8 +391,15 @@ window.selectWizardService = function(serviceId) {
 
   bookingState.serviceId = srv.id;
   bookingState.serviceName = srv.name;
-  bookingState.price = srv.price;
+  bookingState.basePrice = srv.price;
   bookingState.duration = srv.duration || 60;
+
+  if (bookingState.discountPercent > 0) {
+    const discountAmount = Math.round(srv.price * bookingState.discountPercent / 100);
+    bookingState.price = Math.max(0, srv.price - discountAmount);
+  } else {
+    bookingState.price = srv.price;
+  }
 
   renderStep1Services();
   renderStep2Specialists();
@@ -480,10 +535,50 @@ window.selectWizardTime = function(slot) {
   updateTimeSlots();
 };
 
+// Обработка ввода телефона гостя для программы лояльности
+function handleBookingPhoneLookup() {
+  const phoneInput = document.getElementById('bookingClientPhone');
+  const nameInput = document.getElementById('bookingClientName');
+  if (!phoneInput) return;
+
+  const contactVal = phoneInput.value.trim();
+  const client = window.noirData.findClientByContact(contactVal);
+
+  if (client) {
+    // Автозаполняем имя гостя, если оно не было введено вручную
+    if (nameInput && (!nameInput.value.trim() || nameInput.value.trim() === 'Гость')) {
+      nameInput.value = client.name;
+      bookingState.clientName = client.name;
+    }
+
+    if (client.discountPercent > 0) {
+      bookingState.discountPercent = client.discountPercent;
+      const discountAmount = Math.round(bookingState.basePrice * client.discountPercent / 100);
+      bookingState.price = Math.max(0, bookingState.basePrice - discountAmount);
+      bookingState.loyaltyClient = client;
+    } else {
+      bookingState.discountPercent = 0;
+      bookingState.price = bookingState.basePrice;
+      bookingState.loyaltyClient = client;
+    }
+  } else {
+    bookingState.discountPercent = 0;
+    bookingState.price = bookingState.basePrice;
+    bookingState.loyaltyClient = null;
+  }
+
+  renderStep4Summary();
+}
+window.handleBookingPhoneLookup = handleBookingPhoneLookup;
+
 // Рендер Шага 4: Итог перед подтверждением
 function renderStep4Summary() {
   const container = document.getElementById('wizardBookingSummaryBox');
   if (!container) return;
+
+  const hasDiscount = bookingState.discountPercent > 0;
+  const clientName = bookingState.loyaltyClient ? bookingState.loyaltyClient.name : '';
+  const discountAmount = Math.round(bookingState.basePrice * bookingState.discountPercent / 100);
 
   container.innerHTML = `
     <div style="background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-medium); padding: 18px; margin-bottom: 20px;">
@@ -496,12 +591,36 @@ function renderStep4Summary() {
       <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 12px;">
         Мастер: <strong style="color: #FFFFFF;">${bookingState.specialistName}</strong> • ${bookingState.duration} мин
       </div>
+
+      ${hasDiscount ? `
+        <div style="background: rgba(201, 162, 77, 0.12); border: 1px solid rgba(201, 162, 77, 0.35); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 800; color: var(--accent-gold);">
+              ⭐ Рады видеть вас снова${clientName ? ', ' + clientName : ''}!
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              Применена ваша персональная скидка лояльности: <strong>${bookingState.discountPercent}%</strong> (-${window.noirData.formatMoney(discountAmount)})
+            </div>
+          </div>
+          <span style="background: var(--accent-gold); color: #0E1118; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; white-space: nowrap;">
+            -${bookingState.discountPercent}%
+          </span>
+        </div>
+      ` : ''}
+
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
         <div style="font-size: 14px; color: var(--text-sub);">
           📅 <strong>${bookingState.date}</strong> в <strong>${bookingState.time}</strong>
         </div>
-        <div style="font-size: 17px; font-weight: 800; color: var(--accent-gold);">
-          ${window.noirData.formatMoney(bookingState.price)}
+        <div style="text-align: right;">
+          <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold);">
+            ${window.noirData.formatMoney(bookingState.price)}
+          </div>
+          ${hasDiscount ? `
+            <div style="font-size: 12px; color: var(--text-dim); text-decoration: line-through;">
+              ${window.noirData.formatMoney(bookingState.basePrice)}
+            </div>
+          ` : ''}
         </div>
       </div>
     </div>
