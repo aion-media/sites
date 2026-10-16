@@ -368,14 +368,16 @@ const DEFAULT_SERVICES = [
 ];
 
 function generateDemoAppointments() {
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const now = Date.now();
+  const today = new Date(now).toISOString().split('T')[0];
+  const tomorrow = new Date(now + 86400000).toISOString().split('T')[0];
+  const daysAgo = (d) => new Date(now - d * 86400000).toISOString().split('T')[0];
 
   return [
     {
       id: "NOIR-101",
-      clientName: "Константин Васильев",
-      phone: "+7 913 902-11-22",
+      clientName: "Александр Волков",
+      phone: "+7 916 123-45-67",
       serviceId: "srv-men-1",
       serviceName: "Авторская стрижка NOIR (Signature Cut)",
       variantName: "Стандарт",
@@ -386,13 +388,13 @@ function generateDemoAppointments() {
       duration: 60,
       price: 450000,
       status: "confirmed",
-      comment: "Пожелание: текстура сверху, низ под насадку 1.5",
+      comment: "Пожелание: текстура сверху, низ под насадку 1.5 мм",
       createdAt: new Date().toISOString()
     },
     {
       id: "NOIR-102",
-      clientName: "Виктория Смирнова",
-      phone: "+7 923 440-55-66",
+      clientName: "Екатерина Смирнова",
+      phone: "+7 925 889-11-22",
       serviceId: "srv-fem-1",
       serviceName: "Текстурная стрижка и стайлинг",
       variantName: "Стандарт",
@@ -456,9 +458,239 @@ function generateDemoAppointments() {
       status: "new",
       comment: "Подравнять контуры перед встречей",
       createdAt: new Date().toISOString()
+    },
+    // Прошлые завершенные визиты для истории гостей в карточке
+    {
+      id: "NOIR-091",
+      clientName: "Александр Волков",
+      phone: "+7 916 123-45-67",
+      serviceId: "srv-men-1",
+      serviceName: "Авторская стрижка NOIR (Signature Cut)",
+      variantName: "Стандарт",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      date: daysAgo(18),
+      time: "12:00",
+      duration: 60,
+      price: 450000,
+      status: "completed",
+      comment: "Стрижка перед командировкой, идеальный переход",
+      createdAt: new Date(now - 18 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-078",
+      clientName: "Александр Волков",
+      phone: "+7 916 123-45-67",
+      serviceId: "srv-men-4",
+      serviceName: "Камуфляж седины и тонирование + Стрижка",
+      variantName: "Премиум",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      date: daysAgo(45),
+      time: "14:00",
+      duration: 90,
+      price: 750000,
+      status: "completed",
+      comment: "Мягкое естественное тонирование висков",
+      createdAt: new Date(now - 45 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-062",
+      clientName: "Александр Волков",
+      phone: "+7 916 123-45-67",
+      serviceId: "srv-men-1",
+      serviceName: "Авторская стрижка NOIR (Signature Cut)",
+      variantName: "Стандарт",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      date: daysAgo(80),
+      time: "11:30",
+      duration: 60,
+      price: 450000,
+      status: "completed",
+      comment: "Регулярное обновление фейда",
+      createdAt: new Date(now - 80 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-042",
+      clientName: "Александр Волков",
+      phone: "+7 916 123-45-67",
+      serviceId: "srv-men-1",
+      serviceName: "Авторская стрижка NOIR (Signature Cut)",
+      variantName: "Стандарт",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      date: daysAgo(120),
+      time: "11:00",
+      duration: 60,
+      price: 450000,
+      status: "completed",
+      comment: "Первый визит в студию, подобрали геометрию стрижки",
+      createdAt: new Date(now - 120 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-083",
+      clientName: "Дмитрий и сын Артем",
+      phone: "+7 905 771-33-88",
+      serviceId: "srv-kid-4",
+      serviceName: "Комплекс «Отец + Сын»",
+      variantName: "Комплекс",
+      specialistId: "spec-max",
+      specialistName: "Max Rivera",
+      date: daysAgo(28),
+      time: "15:00",
+      duration: 75,
+      price: 700000,
+      status: "completed",
+      comment: "Сыну молния на виске, отцу классический андеркат",
+      createdAt: new Date(now - 28 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-068",
+      clientName: "Дмитрий и сын Артем",
+      phone: "+7 905 771-33-88",
+      serviceId: "srv-kid-4",
+      serviceName: "Комплекс «Отец + Сын»",
+      variantName: "Комплекс",
+      specialistId: "spec-max",
+      specialistName: "Max Rivera",
+      date: daysAgo(60),
+      time: "14:00",
+      duration: 75,
+      price: 700000,
+      status: "completed",
+      comment: "Повторили стрижку перед началом учебы",
+      createdAt: new Date(now - 60 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-087",
+      clientName: "Екатерина Смирнова",
+      phone: "+7 925 889-11-22",
+      serviceId: "srv-fem-3",
+      serviceName: "Тонирование Gloss & Tone",
+      variantName: "Премиум",
+      specialistId: "spec-elena",
+      specialistName: "Elena Rostova",
+      date: daysAgo(35),
+      time: "16:00",
+      duration: 90,
+      price: 750000,
+      status: "completed",
+      comment: "Формула Gloss 9.12 + 1.5%, закрытие кутикулы",
+      createdAt: new Date(now - 35 * 86400000).toISOString()
+    },
+    {
+      id: "NOIR-059",
+      clientName: "Екатерина Смирнова",
+      phone: "+7 925 889-11-22",
+      serviceId: "srv-fem-1",
+      serviceName: "Текстурная стрижка и стайлинг",
+      variantName: "Стандарт",
+      specialistId: "spec-elena",
+      specialistName: "Elena Rostova",
+      date: daysAgo(88),
+      time: "13:00",
+      duration: 75,
+      price: 600000,
+      status: "completed",
+      comment: "Первый визит, бережный срез по кончикам",
+      createdAt: new Date(now - 88 * 86400000).toISOString()
     }
   ];
 }
+
+const DEFAULT_CLIENTS = [
+  {
+    id: "client-1",
+    name: "Александр Волков",
+    phone: "+7 916 123-45-67",
+    normalizedPhone: "79161234567",
+    telegram: "@volkov_alex",
+    gender: "male",
+    category: "vip",
+    notes: "Предпочитает эспрессо без сахара перед началом стрижки. Не любит громкую музыку.",
+    hairNotes: "Жесткие густые волосы, стрижка по форме черепа, низкий фейд 1.5 мм с идеальной растушёвкой. Чувствительная кожа на затылке (обработка тальком без спирта).",
+    firstVisit: "2026-06-15",
+    lastVisit: "2026-10-16",
+    totalVisits: 5,
+    totalSpent: 2250000,
+    favoriteSpecialistId: "spec-alex",
+    favoriteSpecialistName: "Alex Gray",
+    tags: ["VIP", "Низкий фейд", "Эспрессо"]
+  },
+  {
+    id: "client-2",
+    name: "Екатерина Смирнова",
+    phone: "+7 925 889-11-22",
+    normalizedPhone: "79258891122",
+    telegram: "@kate_smirnova",
+    gender: "female",
+    category: "regular",
+    notes: "Любит зелёный чай с жасмином. Ценит бережное отношение к длине у лица.",
+    hairNotes: "Тонкие пористые волосы после осветления. Использовать термозащиту до 220°C, формулу Gloss 9.12 + 1.5%. Не использовать филировочные ножницы.",
+    firstVisit: "2026-07-20",
+    lastVisit: "2026-10-16",
+    totalVisits: 3,
+    totalSpent: 1950000,
+    favoriteSpecialistId: "spec-elena",
+    favoriteSpecialistName: "Elena Rostova",
+    tags: ["Постоянный гость", "Блонд", "Gloss"]
+  },
+  {
+    id: "client-3",
+    name: "Дмитрий и сын Артем",
+    phone: "+7 905 771-33-88",
+    normalizedPhone: "79057713388",
+    telegram: "@dmitry_artem",
+    gender: "male",
+    category: "regular",
+    notes: "Приходят всегда вместе по выходным. Сыну Артёму 9 лет, любит какао и конфеты.",
+    hairNotes: "Отец: классический андеркат, укладка помадой. Сын: выбритый зигзаг или молния на левом виске, текстурный кроп сверху.",
+    firstVisit: "2026-08-05",
+    lastVisit: "2026-10-16",
+    totalVisits: 4,
+    totalSpent: 2800000,
+    favoriteSpecialistId: "spec-max",
+    favoriteSpecialistName: "Max Rivera",
+    tags: ["Семейный визит", "Отец + Сын", "Max Rivera"]
+  },
+  {
+    id: "client-4",
+    name: "Анастасия Белова",
+    phone: "+7 912 334-99-00",
+    normalizedPhone: "79123349900",
+    telegram: "@anastasia_bel",
+    gender: "female",
+    category: "new",
+    notes: "Впервые пришла по рекомендации. Интересуется уходом за поврежденными волосами после моря.",
+    hairNotes: "Сухие концы после солнца и соленой воды. Рекомендовано молекулярное восстановление Tokio Inkarami и домашняя маска с липидами.",
+    firstVisit: "2026-10-16",
+    lastVisit: "2026-10-16",
+    totalVisits: 1,
+    totalSpent: 650000,
+    favoriteSpecialistId: "spec-sofia",
+    favoriteSpecialistName: "Sofia Vance",
+    tags: ["Новый гость", "SPA", "Tokio Inkarami"]
+  },
+  {
+    id: "client-5",
+    name: "Михаил Воронов",
+    phone: "+7 960 112-44-33",
+    normalizedPhone: "79601124433",
+    telegram: "@voronov_m",
+    gender: "male",
+    category: "new",
+    notes: "Записан на завтра на моделирование бороды перед важными переговорами.",
+    hairNotes: "Густая жесткая борода, четкие контуры щек и шеи, горячий компресс с маслом сандала.",
+    firstVisit: "2026-10-17",
+    lastVisit: "2026-10-17",
+    totalVisits: 1,
+    totalSpent: 250000,
+    favoriteSpecialistId: "spec-max",
+    favoriteSpecialistName: "Max Rivera",
+    tags: ["Новый гость", "Борода", "Контуры"]
+  }
+];
 
 class NoirDataService {
   constructor() {
@@ -467,7 +699,8 @@ class NoirDataService {
       CATEGORIES: "noir_categories",
       SERVICES: "noir_services",
       SPECIALISTS: "noir_specialists",
-      APPOINTMENTS: "noir_appointments"
+      APPOINTMENTS: "noir_appointments",
+      CLIENTS: "noir_clients"
     };
 
     this.initDatabase();
@@ -486,8 +719,12 @@ class NoirDataService {
     if (!localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS)) {
       localStorage.setItem(this.STORAGE_KEYS.SPECIALISTS, JSON.stringify(DEFAULT_SPECIALISTS));
     }
-    if (!localStorage.getItem(this.STORAGE_KEYS.APPOINTMENTS)) {
+    const existingApps = localStorage.getItem(this.STORAGE_KEYS.APPOINTMENTS);
+    if (!existingApps || existingApps.includes("Константин Васильев") || !existingApps.includes("NOIR-091")) {
       localStorage.setItem(this.STORAGE_KEYS.APPOINTMENTS, JSON.stringify(generateDemoAppointments()));
+    }
+    if (!localStorage.getItem(this.STORAGE_KEYS.CLIENTS)) {
+      localStorage.setItem(this.STORAGE_KEYS.CLIENTS, JSON.stringify(DEFAULT_CLIENTS));
     }
   }
 
@@ -660,6 +897,11 @@ class NoirDataService {
 
     appointments.unshift(newRecord);
     this.saveAppointments(appointments);
+    try {
+      this.syncClientForAppointment(newRecord);
+    } catch (e) {
+      console.error("Error syncing client for appointment:", e);
+    }
     return newRecord;
   }
 
@@ -669,6 +911,11 @@ class NoirDataService {
     if (idx !== -1) {
       appointments[idx] = { ...appointments[idx], ...updatedFields };
       this.saveAppointments(appointments);
+      try {
+        this.syncClientForAppointment(appointments[idx]);
+      } catch (e) {
+        console.error("Error syncing client:", e);
+      }
       return appointments[idx];
     }
     return null;
@@ -687,9 +934,226 @@ class NoirDataService {
     if (item) {
       item.status = newStatus;
       this.saveAppointments(appointments);
+      try {
+        this.syncClientForAppointment(item);
+      } catch (e) {
+        console.error("Error syncing client:", e);
+      }
       return true;
     }
     return false;
+  }
+
+  // ==========================================
+  // КЛИЕНТСКАЯ БАЗА И КАРТОЧКА ГОСТЯ (CRM)
+  // ==========================================
+  normalizePhone(phone) {
+    if (!phone) return "";
+    return String(phone).replace(/\D/g, "");
+  }
+
+  getClients() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.CLIENTS));
+      if (Array.isArray(stored) && stored.length > 0) {
+        return stored;
+      }
+      return DEFAULT_CLIENTS;
+    } catch (e) {
+      return DEFAULT_CLIENTS;
+    }
+  }
+
+  saveClients(clients) {
+    localStorage.setItem(this.STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+  }
+
+  getClientById(id) {
+    const clients = this.getClients();
+    return clients.find(c => c.id === id) || null;
+  }
+
+  getClientByPhone(phone) {
+    const norm = this.normalizePhone(phone);
+    if (!norm) return null;
+    const clients = this.getClients();
+    return clients.find(c => {
+      const cNorm = this.normalizePhone(c.phone);
+      return cNorm && (cNorm === norm || (norm.length >= 10 && cNorm.endsWith(norm.slice(-10))));
+    }) || null;
+  }
+
+  addClient(clientData) {
+    const clients = this.getClients();
+    const newId = "client-" + Date.now();
+    const newClient = {
+      id: newId,
+      name: clientData.name || "Гость",
+      phone: clientData.phone || "",
+      normalizedPhone: this.normalizePhone(clientData.phone),
+      telegram: clientData.telegram || "",
+      gender: clientData.gender || "male",
+      category: clientData.category || "new",
+      notes: clientData.notes || "",
+      hairNotes: clientData.hairNotes || "",
+      firstVisit: clientData.firstVisit || new Date().toISOString().split('T')[0],
+      lastVisit: clientData.lastVisit || new Date().toISOString().split('T')[0],
+      totalVisits: clientData.totalVisits || 1,
+      totalSpent: clientData.totalSpent || 0,
+      favoriteSpecialistId: clientData.favoriteSpecialistId || "",
+      favoriteSpecialistName: clientData.favoriteSpecialistName || "",
+      tags: clientData.tags || ["Новый гость"]
+    };
+    clients.unshift(newClient);
+    this.saveClients(clients);
+    return newClient;
+  }
+
+  updateClient(id, updatedFields) {
+    const clients = this.getClients();
+    const idx = clients.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      if (updatedFields.phone) {
+        updatedFields.normalizedPhone = this.normalizePhone(updatedFields.phone);
+      }
+      clients[idx] = { ...clients[idx], ...updatedFields };
+      this.saveClients(clients);
+      return clients[idx];
+    }
+    return null;
+  }
+
+  deleteClient(id) {
+    let clients = this.getClients();
+    clients = clients.filter(c => c.id !== id);
+    this.saveClients(clients);
+    return true;
+  }
+
+  // Получение всех посещений и услуг конкретного гостя
+  getClientAppointments(clientIdOrPhone) {
+    const appointments = this.getAppointments();
+    const client = this.getClientById(clientIdOrPhone) || this.getClientByPhone(clientIdOrPhone);
+    const targetNorm = client ? client.normalizedPhone : this.normalizePhone(clientIdOrPhone);
+    const targetName = client ? client.name.toLowerCase().trim() : '';
+
+    return appointments.filter(a => {
+      const aNorm = this.normalizePhone(a.phone);
+      if (targetNorm && aNorm) {
+        if (targetNorm === aNorm || (targetNorm.length >= 10 && aNorm.endsWith(targetNorm.slice(-10)))) {
+          return true;
+        }
+      }
+      if (targetName && a.clientName && a.clientName.toLowerCase().trim() === targetName) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // Автоматическая синхронизация/создание карточки клиента при любой брони
+  syncClientForAppointment(app) {
+    if (!app || (!app.phone && !app.clientName)) return;
+
+    const clients = this.getClients();
+    const appNorm = this.normalizePhone(app.phone);
+    const appName = (app.clientName || '').trim();
+
+    let clientIdx = -1;
+
+    if (appNorm) {
+      clientIdx = clients.findIndex(c => {
+        const cNorm = this.normalizePhone(c.phone);
+        return cNorm && (cNorm === appNorm || (appNorm.length >= 10 && cNorm.endsWith(appNorm.slice(-10))));
+      });
+    }
+
+    if (clientIdx === -1 && appName) {
+      clientIdx = clients.findIndex(c => c.name.toLowerCase().trim() === appName.toLowerCase());
+    }
+
+    if (clientIdx !== -1) {
+      const client = { ...clients[clientIdx] };
+      const clientApps = this.getClientAppointments(client.id);
+
+      let totalVisits = 0;
+      let totalSpent = 0;
+      let lastDate = client.lastVisit || app.date || new Date().toISOString().split('T')[0];
+      const specialistFreq = {};
+
+      clientApps.forEach(a => {
+        if (a.status !== 'cancelled') {
+          totalVisits++;
+          totalSpent += (a.price || 0);
+          if (a.date && a.date >= lastDate) {
+            lastDate = a.date;
+          }
+          if (a.specialistName) {
+            specialistFreq[a.specialistName] = (specialistFreq[a.specialistName] || 0) + 1;
+          }
+        }
+      });
+
+      let topMaster = client.favoriteSpecialistName || app.specialistName;
+      let maxCount = 0;
+      for (const [mName, cnt] of Object.entries(specialistFreq)) {
+        if (cnt > maxCount) {
+          maxCount = cnt;
+          topMaster = mName;
+        }
+      }
+
+      let category = client.category;
+      if (totalVisits >= 5 || totalSpent >= 2000000) {
+        category = 'vip';
+      } else if (totalVisits >= 2) {
+        category = 'regular';
+      } else {
+        category = 'new';
+      }
+
+      client.lastVisit = lastDate;
+      client.totalVisits = Math.max(totalVisits, client.totalVisits || 1);
+      client.totalSpent = Math.max(totalSpent, client.totalSpent || 0);
+      client.favoriteSpecialistName = topMaster;
+      client.category = category;
+
+      if (app.phone && !client.phone) {
+        client.phone = app.phone;
+        client.normalizedPhone = appNorm;
+      }
+      if (app.clientName && (!client.name || client.name === 'Гость')) {
+        client.name = app.clientName;
+      }
+
+      clients[clientIdx] = client;
+      this.saveClients(clients);
+      return client;
+    } else {
+      // Автоматическое создание новой карточки гостя
+      const newClient = {
+        id: "client-" + Date.now(),
+        name: appName || "Новый гость",
+        phone: app.phone || "",
+        normalizedPhone: appNorm,
+        telegram: "",
+        gender: "male",
+        category: "new",
+        notes: app.comment ? ("Заметка из брони: " + app.comment) : "",
+        hairNotes: "",
+        firstVisit: app.date || new Date().toISOString().split('T')[0],
+        lastVisit: app.date || new Date().toISOString().split('T')[0],
+        totalVisits: 1,
+        totalSpent: app.price || 0,
+        favoriteSpecialistId: app.specialistId || "",
+        favoriteSpecialistName: app.specialistName || "Любой свободный мастер",
+        tags: ["Новый гость"]
+      };
+
+      clients.unshift(newClient);
+      this.saveClients(clients);
+      return newClient;
+    }
   }
 
   formatMoney(amount) {
