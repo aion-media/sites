@@ -271,6 +271,14 @@ function loadDashboard() {
       renderPayrollAdmin();
     }, 150);
   }
+
+  const payrollPeriod = urlParams.get('payrollPeriod');
+  if (payrollPeriod) {
+    switchTab('payroll');
+    setTimeout(() => {
+      setPayrollPeriod(payrollPeriod);
+    }, 150);
+  }
 }
 
 function updateKPIs() {
@@ -1894,30 +1902,29 @@ let payrollWeekOffset = 0;
 let payrollIncludeConfirmed = false;
 const expandedPayrollMasters = {};
 
+function formatLocalDate(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function getPayrollDateRange() {
-  let now = new Date();
-  const apps = window.noirData.getAppointments();
-  if (apps && apps.length > 0) {
-    const dates = apps.map(a => a.date).sort();
-    const latestDateStr = dates[dates.length - 1];
-    if (latestDateStr) {
-      now = new Date(latestDateStr + 'T12:00:00');
-    }
-  }
+  const baseToday = new Date();
 
   let startDateStr = '';
   let endDateStr = '';
   let label = '';
 
   if (payrollPeriodMode === 'today') {
-    const target = new Date(now);
+    const target = new Date(baseToday);
     target.setDate(target.getDate() + payrollWeekOffset);
-    startDateStr = target.toISOString().split('T')[0];
+    startDateStr = formatLocalDate(target);
     endDateStr = startDateStr;
     const isBase = payrollWeekOffset === 0;
     label = target.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'short' }) + (isBase ? ' (Сегодня)' : '');
   } else if (payrollPeriodMode === 'weekly' || payrollPeriodMode === 'lastweek') {
-    const target = new Date(now);
+    const target = new Date(baseToday);
     const dayOfWeek = target.getDay() === 0 ? 7 : target.getDay();
     target.setDate(target.getDate() - (dayOfWeek - 1) + (payrollWeekOffset * 7));
 
@@ -1925,23 +1932,23 @@ function getPayrollDateRange() {
     const sun = new Date(target);
     sun.setDate(mon.getDate() + 6);
 
-    startDateStr = mon.toISOString().split('T')[0];
-    endDateStr = sun.toISOString().split('T')[0];
+    startDateStr = formatLocalDate(mon);
+    endDateStr = formatLocalDate(sun);
 
     const monFmt = mon.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     const sunFmt = sun.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
     const weekNote = payrollWeekOffset === 0 ? ' (Текущая неделя)' : (payrollWeekOffset === -1 ? ' (Прошлая неделя)' : '');
     label = `${monFmt} — ${sunFmt}${weekNote}`;
   } else if (payrollPeriodMode === 'month') {
-    const target = new Date(now);
+    const target = new Date(baseToday);
     target.setMonth(target.getMonth() + payrollWeekOffset);
     const y = target.getFullYear();
     const m = target.getMonth();
     const firstDay = new Date(y, m, 1);
     const lastDay = new Date(y, m + 1, 0);
 
-    startDateStr = firstDay.toISOString().split('T')[0];
-    endDateStr = lastDay.toISOString().split('T')[0];
+    startDateStr = formatLocalDate(firstDay);
+    endDateStr = formatLocalDate(lastDay);
 
     const monthName = target.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
     label = monthName.charAt(0).toUpperCase() + monthName.slice(1);
