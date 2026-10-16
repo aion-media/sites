@@ -309,6 +309,12 @@ function loadDashboard() {
       openPayoutModal(openPayout === '1' ? 'spec-alex' : openPayout, dateRange.startDate, dateRange.endDate);
     }, 200);
   }
+
+  const openPayrollHelp = urlParams.get('openPayrollHelp');
+  if (openPayrollHelp || href.includes('openPayrollHelp') || href.includes('payroll-help') || window.location.hash.includes('help')) {
+    switchTab('payroll');
+    openPayrollHelpModal();
+  }
 }
 
 function updateKPIs() {
@@ -2140,6 +2146,12 @@ window.switchPayrollSubView = function(subView) {
   const badgeEl = document.getElementById('payoutOrdersBadgeCount');
   if (badgeEl) badgeEl.textContent = orders.length;
 };
+
+function openPayrollHelpModal() {
+  const modal = document.getElementById('adminPayrollHelpModal');
+  if (modal) modal.classList.add('active');
+}
+window.openPayrollHelpModal = openPayrollHelpModal;
 
 window.openPayoutModal = function(specId, startDate, endDate) {
   const modal = document.getElementById('adminPayoutConfirmModal');
