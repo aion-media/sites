@@ -347,8 +347,8 @@ function renderTimeline() {
       <tr style="background: rgba(229, 169, 60, 0.06); border-top: 2px dashed var(--accent-gold);">
         <td style="border-right: 1px solid var(--border-subtle); padding: 10px 14px; width: 220px; min-width: 220px;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-gold-bg); border: 1px solid var(--border-accent); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--accent-gold); flex-shrink: 0;">
-              ⚡
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--accent-gold-bg); border: 1px solid var(--border-accent); display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--accent-gold); font-weight: 800; flex-shrink: 0;">
+              !
             </div>
             <div>
               <div style="display: flex; align-items: center; gap: 6px;">
@@ -611,8 +611,8 @@ function renderServicesAdmin() {
     html += `
       <div style="background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); padding: 20px; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h4 style="font-size: 16px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 8px;">
-            <span>${cat.icon}</span> ${cat.name}
+          <h4 style="font-size: 16px; font-weight: 800; color: #FFFFFF;">
+            ${cat.name}
           </h4>
           <button type="button" class="btn btn-secondary" onclick="openCreateServiceModal('${cat.id}')" style="padding: 4px 12px; font-size: 12px;">
             + Добавить услугу

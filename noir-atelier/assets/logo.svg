@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 50" width="260" height="50">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 285 48" width="285" height="48">
   <defs>
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FCD34D" />
@@ -11,16 +11,21 @@
     </filter>
   </defs>
   
-  <!-- Emblem Monogram -->
-  <g transform="translate(4, 5)">
-    <rect x="0" y="0" width="40" height="40" rx="10" fill="#131620" stroke="url(#goldGrad)" stroke-width="1.5" />
-    <path d="M12 28 V12 L28 28 V12" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-    <circle cx="28" cy="12" r="2" fill="#FCD34D" filter="url(#glow)" />
+  <!-- Emblem Monogram: +12% size, refined luxury frame -->
+  <g id="noirEmblem" transform="translate(2, 2)">
+    <rect x="0" y="0" width="44" height="44" rx="11" fill="#131620" stroke="url(#goldGrad)" stroke-width="1.6" />
+    <path d="M13 31 V13 L31 31 V13" fill="none" stroke="url(#goldGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="31" cy="13" r="2.2" fill="#FCD34D" filter="url(#glow)" />
   </g>
 
-  <!-- Text Branding -->
-  <text x="56" y="27" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="900" font-size="22" letter-spacing="4" fill="#FFFFFF">NOIR</text>
-  <text x="56" y="41" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="600" font-size="9" letter-spacing="3.5" fill="url(#goldGrad)">HAIR ATELIER</text>
-  <circle cx="165" cy="38" r="1.5" fill="#E5A93C" />
-  <text x="172" y="41" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="500" font-size="8.5" letter-spacing="2" fill="#94A3B8">STUDIO &amp; SPA</text>
+  <!-- Text Branding: Vertically aligned with emblem height, NOIR lighter weight (700) -->
+  <g transform="translate(56, 0)">
+    <!-- Primary Name: NOIR (refined, less bold, luxury tracking) -->
+    <text x="0" y="27" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="700" font-size="26" letter-spacing="5.5" fill="#FFFFFF">NOIR</text>
+    
+    <!-- Secondary Line: matched baseline to balance emblem height (44px) -->
+    <text x="1" y="42" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="600" font-size="9.5" letter-spacing="3.8" fill="url(#goldGrad)">HAIR ATELIER</text>
+    <circle cx="120" cy="38.5" r="1.5" fill="#E5A93C" />
+    <text x="128" y="42" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-weight="500" font-size="9" letter-spacing="2.2" fill="#94A3B8">STUDIO &amp; SPA</text>
+  </g>
 </svg>

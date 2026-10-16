@@ -141,7 +141,7 @@ button, input, select, textarea {
 }
 
 .header-logo-img {
-  height: 38px;
+  height: 42px;
   width: auto;
 }
 
@@ -381,17 +381,19 @@ button, input, select, textarea {
   color: var(--text-muted);
 }
 
-/* Category Navigation Tabs */
+/* Category Navigation Tabs - Static full-width layout without horizontal scrolling */
 .category-tabs-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 36px;
-  overflow-x: auto;
-  padding: 6px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto 36px;
+  padding: 0;
+  overflow: visible;
 }
 
 .category-tabs {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: 100%;
   background: var(--bg-surface);
   padding: 6px;
   border-radius: var(--radius-full);
@@ -400,15 +402,16 @@ button, input, select, textarea {
 }
 
 .cat-tab-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
+  padding: 10px 14px;
   border-radius: var(--radius-full);
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1398,6 +1401,13 @@ button, input, select, textarea {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .category-tabs {
+    border-radius: var(--radius-md);
+  }
+  .cat-tab-btn {
+    padding: 9px 8px;
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1405,7 +1415,7 @@ button, input, select, textarea {
     height: 62px;
   }
   .header-logo-img {
-    height: 30px;
+    height: 34px;
   }
   .header-actions {
     gap: 8px;
@@ -1420,6 +1430,18 @@ button, input, select, textarea {
   }
   .header-nav {
     display: none; /* Mobile menu handled via drawer */
+  }
+  .category-tabs {
+    grid-template-columns: repeat(2, 1fr);
+    border-radius: var(--radius-md);
+    gap: 6px;
+  }
+  .cat-tab-btn:first-child {
+    grid-column: span 2;
+  }
+  .cat-tab-btn {
+    padding: 9px 8px;
+    font-size: 12px;
   }
   .hero-title {
     font-size: 30px;

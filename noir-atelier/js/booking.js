@@ -135,7 +135,7 @@ function goToStep(stepNumber) {
 
   if (nextBtn) {
     if (stepNumber === 4) {
-      nextBtn.textContent = 'Подтвердить запись ✨';
+      nextBtn.textContent = 'Подтвердить запись';
     } else if (stepNumber === 5) {
       nextBtn.textContent = 'Готово';
     } else {
@@ -247,8 +247,8 @@ function renderStep1Services() {
 
     html += `
       <div style="margin-bottom: 20px;">
-        <div style="font-size: 13px; font-weight: 800; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-          <span>${cat.icon}</span> ${cat.name}
+        <div style="font-size: 13px; font-weight: 800; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;">
+          ${cat.name}
         </div>
         <div class="wizard-options-grid">
     `;
@@ -302,8 +302,8 @@ function renderStep2Specialists() {
   let html = `
     <div class="wizard-options-grid">
       <div class="wizard-option-card ${bookingState.specialistId === 'any' ? 'selected' : ''}" onclick="selectWizardSpecialist('any', 'Любой свободный мастер')">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gold-bg); border: 1px solid var(--border-accent); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px; color: var(--accent-gold);">
-          ✨
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gold-bg); border: 1px solid var(--border-accent); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; color: var(--accent-gold); font-weight: 800;">
+          N
         </div>
         <div style="font-weight: 800; color: #FFFFFF; font-size: 15px; margin-bottom: 4px;">Любой свободный мастер</div>
         <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 6px;">Рекомендуем для максимального выбора удобного времени</div>

@@ -35,7 +35,7 @@ function renderCategoryTabs() {
     const isActive = currentCategoryFilter === cat.id;
     html += `
       <button type="button" class="cat-tab-btn ${isActive ? 'active' : ''}" onclick="filterCategory('${cat.id}')">
-        <span>${cat.icon} ${cat.name}</span>
+        <span>${cat.name}</span>
         <span class="cat-badge">${count}</span>
       </button>
     `;
@@ -85,7 +85,7 @@ function renderServicesGrid() {
           <div class="service-meta">
             <span>⏱️ ${s.duration} минут</span>
             <span>•</span>
-            <span class="service-category-tag">${cat ? cat.icon : '✨'} ${catName}</span>
+            <span class="service-category-tag">${catName}</span>
           </div>
           <p class="service-desc">${s.shortDesc}</p>
         </div>
@@ -95,7 +95,7 @@ function renderServicesGrid() {
             Выбрать время →
           </button>
           <button type="button" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px;" onclick="openBookingModal('${s.id}')">
-            Записаться ✨
+            Записаться
           </button>
         </div>
       </div>

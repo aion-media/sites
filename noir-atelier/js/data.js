@@ -12,9 +12,9 @@ const DEFAULT_SALON_INFO = {
   address: "Центральный проспект, 14 • Atelier Suite #1",
   addressShort: "Центральный проспект, 14",
   phone: "+7 (999) 000-00-00",
-  whatsapp: "https://t.me/artem_aion",
-  telegram: "https://t.me/artem_aion",
-  instagram: "https://t.me/artem_aion",
+  whatsapp: "javascript:void(0)",
+  telegram: "https://t.me/litt1e_roo",
+  instagram: "javascript:void(0)",
   hours: "Ежедневно 10:00 – 21:00",
   features: [
     "Команда топ-стилистов и экспертов с международным опытом",
@@ -29,25 +29,25 @@ const DEFAULT_CATEGORIES = [
   { 
     id: "men-style", 
     name: "Мужские стрижки и стиль", 
-    icon: "✂️", 
+    icon: "", 
     desc: "Авторские мужские стрижки, моделирование бороды, королевское бритьё и тонирование седины" 
   },
   { 
     id: "women-style", 
     name: "Женские стрижки и укладки", 
-    icon: "💇‍♀️", 
+    icon: "", 
     desc: "Текстурные стрижки по технике Vidal Sassoon, брашинг, вечерние образы и уход за бровями" 
   },
   { 
     id: "kids-style", 
     name: "Детские стрижки", 
-    icon: "⚡", 
+    icon: "", 
     desc: "Стильные детские и подростковые формы, фейды, фигурные выстриги и семейный комплекс «Отец + Сын»" 
   },
   { 
     id: "spa-care", 
     name: "SPA-уход и восстановление", 
-    icon: "🧴", 
+    icon: "", 
     desc: "Детокс кожи головы, молекулярная реконструкция волос, аромамассаж и комплексный ритуал NOIR" 
   }
 ];
@@ -368,12 +368,8 @@ class NoirDataService {
   }
 
   initDatabase() {
-    if (!localStorage.getItem(this.STORAGE_KEYS.SALON)) {
-      localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(DEFAULT_SALON_INFO));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.CATEGORIES)) {
-      localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
-    }
+    localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(DEFAULT_SALON_INFO));
+    localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
     if (!localStorage.getItem(this.STORAGE_KEYS.SERVICES)) {
       localStorage.setItem(this.STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
     }
