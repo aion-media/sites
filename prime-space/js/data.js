@@ -868,7 +868,12 @@ class PrimeDataService {
   getClients() {
     try {
       const data = localStorage.getItem(this.STORAGE_KEYS.CLIENTS);
-      if (data) return JSON.parse(data);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
       return this.rebuildClientsFromSchedule();
     } catch (e) {
       return this.rebuildClientsFromSchedule();
@@ -883,24 +888,186 @@ class PrimeDataService {
     const schedule = this.getSchedule();
     const clientsMap = {};
 
+    const PRESETS = {
+      "+84 90 567 8901": {
+        notes: "Ходит с сыном Артемом (7 лет). Мама Елена во время детских занятий работает в коворкинге на 2 этаже. Предупреждать о наборе на новые интенсивы по 3D.",
+        telegram: "@elena_prime",
+        extraHistory: [
+          {
+            lessonId: "hist-1",
+            lessonTitle: "Робототехника и механика LEGO",
+            dayOfWeek: 3,
+            time: "16:30 – 18:00",
+            spaceId: "prime-lab",
+            masterName: "Андрей",
+            price: 200000,
+            status: "visited",
+            date: "14.10.2026"
+          },
+          {
+            lessonId: "hist-2",
+            lessonTitle: "Пробный день в детской среде",
+            dayOfWeek: 1,
+            time: "15:00 – 16:30",
+            spaceId: "prime-kids",
+            masterName: "Ольга",
+            price: 0,
+            status: "visited",
+            date: "12.10.2026"
+          }
+        ]
+      },
+      "+84 90 555 1234": {
+        notes: "IT-предприниматель, резидент коворкинга на 2 этаже. Активный участник субботнего МастерМайнда в зале MIND.",
+        telegram: "@alex_it_hub",
+        extraHistory: [
+          {
+            lessonId: "hist-3",
+            lessonTitle: "Дневной тариф коворкинга (Hot Desk)",
+            dayOfWeek: 4,
+            time: "10:00 – 19:00",
+            spaceId: "prime-coworking",
+            masterName: "Администратор",
+            price: 150000,
+            status: "visited",
+            date: "15.10.2026"
+          },
+          {
+            lessonId: "hist-4",
+            lessonTitle: "Дневной тариф коворкинга (Hot Desk)",
+            dayOfWeek: 2,
+            time: "10:00 – 19:00",
+            spaceId: "prime-coworking",
+            masterName: "Администратор",
+            price: 150000,
+            status: "visited",
+            date: "13.10.2026"
+          }
+        ]
+      },
+      "+84 90 234 5671": {
+        notes: "Постоянная гостья танцевальных практик и стретчинга. Интересуется саундхилингом и медитациями в зале BODY.",
+        telegram: "@alina_v",
+        extraHistory: [
+          {
+            lessonId: "hist-5",
+            lessonTitle: "Stretching (Растяжка)",
+            dayOfWeek: 3,
+            time: "11:00 – 12:00",
+            spaceId: "prime-body",
+            masterName: "Диана",
+            price: 180000,
+            status: "visited",
+            date: "14.10.2026"
+          }
+        ]
+      },
+      "+84 90 111 2233": {
+        notes: "Постоянный абонемент на утренний стретчинг и боди-балет у Дианы. Любит травяной чай с мятой в кафе.",
+        telegram: "@katya_dance",
+        extraHistory: [
+          {
+            lessonId: "hist-6",
+            lessonTitle: "Ballet for adults (Боди-балет)",
+            dayOfWeek: 2,
+            time: "15:00 – 16:00",
+            spaceId: "prime-body",
+            masterName: "Диана",
+            price: 200000,
+            status: "visited",
+            date: "13.10.2026"
+          }
+        ]
+      },
+      "+84 91 678 9012": {
+        notes: "Папа Сергей приводит сына Даниила. Интересовался шахматным клубом в коворкинге по субботам.",
+        telegram: "@sergey_d",
+        extraHistory: [
+          {
+            lessonId: "hist-7",
+            lessonTitle: "ОФП для детей 4+",
+            dayOfWeek: 3,
+            time: "17:00 – 18:00",
+            spaceId: "prime-body",
+            masterName: "Вадим",
+            price: 180000,
+            status: "visited",
+            date: "14.10.2026"
+          }
+        ]
+      },
+      "+84 98 890 1234": {
+        notes: "Дочка София (8 лет) занимается в 3D-лаборатории и на арт-мастер-классах. Мама берет матча-латте в кафе.",
+        telegram: "@yulia_sofia",
+        extraHistory: [
+          {
+            lessonId: "hist-8",
+            lessonTitle: "Рисование Дети",
+            dayOfWeek: 6,
+            time: "11:00 – 12:00",
+            spaceId: "prime-art",
+            masterName: "Андрей",
+            price: 220000,
+            status: "visited",
+            date: "10.10.2026"
+          }
+        ]
+      },
+      "+84 93 456 7893": {
+        notes: "Занимается в женских группах выходного дня. Предпочитает зал PRIME BODY на 4 этаже.",
+        telegram: "@olga_k"
+      },
+      "+84 90 333 4455": {
+        notes: "Подростковая группа по компьютерной грамотности и AI у Андрея. Очень увлечен нейросетями.",
+        telegram: "@nikita_coder"
+      },
+      "+84 91 123 4567": {
+        notes: "Пилатес для здоровья спины после офисной работы.",
+        telegram: "@viktoria_n"
+      },
+      "+84 90 345 6789": {
+        notes: "Актерское мастерство для взрослых у Анны. Готовится к публичным выступлениям.",
+        telegram: "@roman_speaker"
+      }
+    };
+
+    const DAY_DATES = {
+      1: "12.10.2026",
+      2: "13.10.2026",
+      3: "14.10.2026",
+      4: "15.10.2026",
+      5: "16.10.2026",
+      6: "17.10.2026",
+      7: "18.10.2026"
+    };
+
     schedule.forEach(item => {
       if (!item.participants) return;
       item.participants.forEach(p => {
         const key = (p.phone || p.name).trim().toLowerCase();
+        const preset = PRESETS[p.phone] || {};
+
         if (!clientsMap[key]) {
           clientsMap[key] = {
             id: "c-" + Math.abs(this.hashCode(key)),
             name: p.name,
             phone: p.phone,
-            notes: "",
-            firstVisit: p.createdAt || "2026-10-14",
+            telegram: preset.telegram || "",
+            notes: preset.notes || "",
+            firstVisit: preset.extraHistory ? preset.extraHistory[preset.extraHistory.length - 1].date : (DAY_DATES[item.dayOfWeek] || "14.10.2026"),
             visitsCount: 0,
             history: []
           };
+          if (preset.extraHistory) {
+            preset.extraHistory.forEach(eh => {
+              clientsMap[key].history.push(eh);
+              clientsMap[key].visitsCount += 1;
+            });
+          }
         }
 
         clientsMap[key].visitsCount += 1;
-        clientsMap[key].history.push({
+        clientsMap[key].history.unshift({
           lessonId: item.id,
           lessonTitle: item.title,
           dayOfWeek: item.dayOfWeek,
@@ -909,7 +1076,7 @@ class PrimeDataService {
           masterName: item.masterName,
           price: item.price,
           status: p.status || "confirmed",
-          date: p.createdAt || "2026-10-15"
+          date: DAY_DATES[item.dayOfWeek] || "16.10.2026"
         });
       });
     });
