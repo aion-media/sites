@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOIR Hair Atelier | Премиальное ателье стиля, стрижек и SPA</title>
+  <meta name="description" content="Универсальное премиальное пространство: мужские и женские авторские стрижки, моделирование бороды, детские стили и глубокий SPA-уход.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Sticky Luxury Header -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="#" class="header-brand">
+        <img src="assets/logo.svg" alt="NOIR Hair Atelier" class="header-logo-img">
+      </a>
+
+      <nav class="header-nav">
+        <a href="#services" class="nav-link">Услуги и цены</a>
+        <a href="#specialists" class="nav-link">Мастера</a>
+        <a href="#interior" class="nav-link">Атмосфера</a>
+        <a href="#reviews" class="nav-link">Отзывы</a>
+        <a href="#contacts" class="nav-link">Контакты</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="admin.html" class="btn-crm-pill" title="Открыть CRM систему салона">
+          CRM Демо ⚡
+        </a>
+        <button type="button" class="btn btn-primary" data-open-booking>
+          Записаться ✨
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-glow-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-badge">
+        <span>✨ Премиальное ателье персонального стиля</span>
+      </div>
+
+      <h1 class="hero-title">
+        Архитектура стиля &amp; <br>
+        <span class="hero-title-accent">Безупречная эстетика</span>
+      </h1>
+
+      <p class="hero-desc">
+        Пространство для тех, кто ценит точность формы, безупречный сервис и приватную атмосферу. Мужские и женские авторские стрижки, уход за бородой, детские направления и глубокий восстанавливающий SPA-уход.
+      </p>
+
+      <div class="hero-actions">
+        <button type="button" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;" data-open-booking>
+          Онлайн-запись к мастеру
+        </button>
+        <a href="#services" class="btn btn-secondary" style="padding: 14px 28px; font-size: 15px;">
+          Смотреть меню услуг ↓
+        </a>
+      </div>
+
+      <!-- 4 Core Feature Cards -->
+      <div class="hero-features-bar">
+        <div class="hero-feature-card">
+          <span class="hero-feat-icon">💎</span>
+          <h4 class="hero-feat-title">Топ-стилисты</h4>
+          <p class="hero-feat-desc">Мастера с непрерывным опытом от 6 до 12 лет и международной сертификацией.</p>
+        </div>
+
+        <div class="hero-feature-card">
+          <span class="hero-feat-icon">🍸</span>
+          <h4 class="hero-feat-title">Приватный лаундж</h4>
+          <p class="hero-feat-desc">Атмосфера клубного комфорта, спешелти-кофе, напитки и приватные зоны.</p>
+        </div>
+
+        <div class="hero-feature-card">
+          <span class="hero-feat-icon">🛡️</span>
+          <h4 class="hero-feat-title">3 этапа СанПиН</h4>
+          <p class="hero-feat-desc">Абсолютная стерилизация инструмента в сухожарах медицинского класса.</p>
+        </div>
+
+        <div class="hero-feature-card">
+          <span class="hero-feat-icon">🧴</span>
+          <h4 class="hero-feat-title">Селективный уход</h4>
+          <p class="hero-feat-desc">Премиальные косметические бренды и индивидуальные формулы восстановления.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services & Pricing Catalog -->
+  <section class="section" id="services">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Каталог услуг</span>
+        <h2 class="section-title">Меню ателье NOIR</h2>
+        <p class="section-subtitle">Выберите интересующее направление и запишитесь в удобное для вас время</p>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="category-tabs-wrapper">
+        <div class="category-tabs" id="categoryTabsContainer">
+          <!-- Rendered dynamically via app.js -->
+        </div>
+      </div>
+
+      <!-- Services Grid (16 total, 4 per category) -->
+      <div class="services-grid" id="servicesGridContainer">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Specialists / Masters Section -->
+  <section class="section" id="specialists" style="background: rgba(13, 15, 20, 0.5);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Команда экспертов</span>
+        <h2 class="section-title">Стилисты &amp; Мастера</h2>
+        <p class="section-subtitle">Каждый мастер ателье — профессионал с тонким пониманием индивидуальной формы</p>
+      </div>
+
+      <div class="specialists-grid" id="specialistsGridContainer">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Interior Showcase Gallery -->
+  <section class="section" id="interior">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Пространство &amp; Дизайн</span>
+        <h2 class="section-title">Атмосфера NOIR</h2>
+        <p class="section-subtitle">Эстетика минимализма, комфортная акустика, мягкий свет и продуманный сервис</p>
+      </div>
+
+      <div class="gallery-grid">
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1000&q=80" alt="Интерьер NOIR" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Главный зал &amp; Рабочие места мастеров</span>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80" alt="Барбер-зона" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Зона бритья и мужского ухода</span>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80" alt="Косметика" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Селективные коллекции стайлинга</span>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1629732047847-50219e9c5aef?auto=format&fit=crop&w=800&q=80" alt="SPA зона" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">SPA-лаундж &amp; Релакс-уход</span>
+          </div>
+        </div>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80" alt="Лаундж" class="gallery-img">
+          <div class="gallery-overlay">
+            <span class="gallery-tag">Гостевой бар &amp; Лаундж</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Client Reviews -->
+  <section class="section" id="reviews" style="background: rgba(13, 15, 20, 0.4);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Впечатления гостей</span>
+        <h2 class="section-title">Отзывы клиентов</h2>
+        <p class="section-subtitle">Мнения постоянных гостей о нашем уровне сервиса и атмосфере</p>
+      </div>
+
+      <div class="reviews-grid">
+        <div class="review-card">
+          <div>
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">«Искал салон с европейским уровнем сервиса. Алекс сделал фирменную стрижку именно так, как я хотел, без лишних слов. Плюс отличный кофе и приятный лаундж.»</p>
+          </div>
+          <div class="review-author">
+            <div class="review-avatar">МВ</div>
+            <div>
+              <div class="review-author-name">Максим Васильев</div>
+              <div class="review-author-sub">Предприниматель</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card">
+          <div>
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">«Елена — волшебница! После детокс-терапии и молекулярного ухода волосы просто ожили. Невероятный блеск и легкость. Обязательно вернусь снова.»</p>
+          </div>
+          <div class="review-author">
+            <div class="review-avatar">ЕВ</div>
+            <div>
+              <div class="review-author-name">Екатерина Воронова</div>
+              <div class="review-author-sub">Дизайнер интерьеров</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-card">
+          <div>
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">«Ходили с сыном по комплексу "Отец + Сын" к Максу. Сын в восторге от выстрига молнии на виске, а я получил идеальную бороду и свежую стрижку.»</p>
+          </div>
+          <div class="review-author">
+            <div class="review-avatar">ДС</div>
+            <div>
+              <div class="review-author-name">Денис Смирнов</div>
+              <div class="review-author-sub">Архитектор</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Вопросы &amp; Ответы</span>
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item open">
+          <button type="button" class="faq-question">
+            <span>Нужно ли записываться заранее или можно прийти без записи?</span>
+            <span class="faq-arrow">▾</span>
+          </button>
+          <div class="faq-answer">
+            Мы рекомендуем оформить онлайн-запись заранее через форму на сайте или наш Telegram-бот, чтобы гарантировать свободное время у желаемого топ-мастера. Если у вас спонтанный визит, мы всегда рады предложить ближайший доступный слот дежурного мастера.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>Какую косметику и средства стайлинга вы используете?</span>
+            <span class="faq-arrow">▾</span>
+          </button>
+          <div class="faq-answer">
+            Мы работаем исключительно на сертифицированных премиальных линейках (Oribe, Davines, American Crew, Reuzel). Все средства гипоаллергенны и индивидуально подбираются мастером под структуру ваших волос и чувствительность кожи.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>Как проходит стерилизация инструментов?</span>
+            <span class="faq-arrow">▾</span>
+          </button>
+          <div class="faq-answer">
+            Мы соблюдаем 3-ступенчатый регламент стерилизации медицинского уровня: дезинфекция в ультразвуковой ванне со спецраствором, промывка и сушка, термическая обработка в крафт-пакетах в сертифицированном сухожаровом шкафу при температуре 180°C. Пакет вскрывается строго при госте.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>Как работает семейный комплекс «Отец + Сын»?</span>
+            <span class="faq-arrow">▾</span>
+          </button>
+          <div class="faq-answer">
+            Вы приходите вдвоем, вас обслуживают одновременно в соседних креслах. Папе выполняется полная мужская стрижка со стайлингом, сыну — модная модельная стрижка с легким выстригом по желанию. В процессе подаются чай, лимонад или кофе.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer & Contacts -->
+  <footer class="site-footer" id="contacts">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand-title">NOIR HAIR ATELIER</div>
+          <p class="footer-brand-desc">
+            Премиальное пространство персонального стиля, авторских стрижек и восстанавливающих SPA-ритуалов.
+          </p>
+          <div class="footer-social-links">
+            <a href="https://t.me/artem_aion" target="_blank" class="social-pill">
+              Telegram
+            </a>
+            <a href="https://t.me/artem_aion" target="_blank" class="social-pill">
+              WhatsApp
+            </a>
+            <a href="https://t.me/artem_aion" target="_blank" class="social-pill">
+              Instagram
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-title">Информация</h4>
+          <ul class="footer-info-list">
+            <li>📍 <span>Центральный проспект, 14, Atelier Suite #1</span></li>
+            <li>⏱️ <span>Ежедневно 10:00 – 21:00</span></li>
+            <li>💳 <span>Оплата картами, наличными и QR</span></li>
+            <li>☕ <span>Бесплатный гостевой бар и лаундж</span></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-title">Управление</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
+            Данный сайт оснащен полноценной встроенной CRM-системой управления расписанием и записями.
+          </p>
+          <a href="admin.html" class="btn btn-secondary" style="font-size: 13px; width: 100%; text-align: center;">
+            Панель управления CRM →
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 NOIR Hair Atelier. Все права защищены.</div>
+        <div>
+          <a href="https://t.me/artem_aion" target="_blank" style="color: var(--accent-gold);">
+            Связаться с разработчиком
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Booking Wizard Modal (5 Steps) -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <h3>Онлайн-запись в ателье NOIR</h3>
+          <p>Выберите услугу, мастера и удобное время</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="bookingModalClose">✕</button>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="wizard-steps">
+        <div class="wizard-step active" data-step-indicator="1">
+          <div class="wizard-step-num">1</div>
+          <span>Услуга</span>
+        </div>
+        <div class="wizard-step" data-step-indicator="2">
+          <div class="wizard-step-num">2</div>
+          <span>Мастер</span>
+        </div>
+        <div class="wizard-step" data-step-indicator="3">
+          <div class="wizard-step-num">3</div>
+          <span>Время</span>
+        </div>
+        <div class="wizard-step" data-step-indicator="4">
+          <div class="wizard-step-num">4</div>
+          <span>Контакты</span>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Panel 1: Services List -->
+        <div class="wizard-panel active" id="wizardPanel1">
+          <div id="wizardServicesList">
+            <!-- Rendered dynamically via booking.js -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Specialists List -->
+        <div class="wizard-panel" id="wizardPanel2">
+          <div id="wizardSpecialistsList">
+            <!-- Rendered dynamically via booking.js -->
+          </div>
+        </div>
+
+        <!-- Panel 3: Date & Time -->
+        <div class="wizard-panel" id="wizardPanel3">
+          <div class="form-group">
+            <label class="form-label">Выберите дату визита:</label>
+            <input type="date" id="wizardDateInput" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Доступные слоты времени:</label>
+            <div class="time-slots-grid" id="wizardTimeSlotsGrid">
+              <!-- Rendered dynamically via booking.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Client Info -->
+        <div class="wizard-panel" id="wizardPanel4">
+          <div id="wizardBookingSummaryBox">
+            <!-- Rendered dynamically via booking.js -->
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ваше имя *</label>
+            <input type="text" id="bookingClientName" class="form-input" placeholder="Как к вам обращаться" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Номер телефона или ник в Telegram *</label>
+            <input type="tel" id="bookingClientPhone" class="form-input" placeholder="+7 (999) 000-00-00 или @username" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Пожелания или комментарий (необязательно)</label>
+            <textarea id="bookingClientComment" class="form-textarea" rows="2" placeholder="Например: хочу сохранить длину сверху или есть аллергия"></textarea>
+          </div>
+        </div>
+
+        <!-- Panel 5: Success Confirmation -->
+        <div class="wizard-panel" id="wizardPanel5">
+          <div id="wizardSuccessBox">
+            <!-- Rendered dynamically via booking.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="wizardPrevBtn" style="visibility: hidden;">
+          ← Назад
+        </button>
+        <button type="button" class="btn btn-primary" id="wizardNextBtn">
+          Далее →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/booking.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
