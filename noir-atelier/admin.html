@@ -331,6 +331,15 @@
 
         <!-- TAB 4: ПРЕЙСКУРАНТ И УСЛУГИ -->
         <div class="admin-tab-pane" id="tabPane_services" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 20px;">
+            <div>
+              <h3 style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Прейскурант и услуги ателье NOIR</h3>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">Управление ценами, длительностью, протоколами и описанием процедур</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openCreateServiceModal()" style="padding: 8px 16px; font-size: 13px; font-weight: 700;">
+              + Добавить услугу
+            </button>
+          </div>
           <div id="adminServicesContainer">
             <!-- Rendered dynamically via admin.js -->
           </div>
@@ -567,6 +576,99 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
           <button type="submit" class="btn btn-primary" id="saveSpecialistSubmitBtn">Сохранить мастера</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ УСЛУГИ -->
+  <div class="modal-overlay" id="adminServiceModal">
+    <div class="modal-card" style="max-width: 660px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <h3 id="serviceModalTitle">Редактирование услуги</h3>
+          <p>Параметры услуги, цены, длительность и протокол процедуры</p>
+        </div>
+        <button type="button" class="modal-close-btn modal-close-trigger">✕</button>
+      </div>
+
+      <form id="adminServiceForm" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; min-height: 0;">
+        <input type="hidden" id="serviceEditId">
+        <div class="modal-body" style="flex-grow: 1; overflow-y: auto; max-height: calc(85vh - 160px); padding: 20px 28px;">
+          <!-- 1. Категория и статус популярности -->
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div>
+              <label class="form-label">Направление / Категория *</label>
+              <select id="serviceEditCategory" class="form-select" required></select>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: var(--radius-sm); cursor: pointer; height: 42px;">
+                <input type="checkbox" id="serviceEditPopular" style="accent-color: var(--accent-gold); width: 16px; height: 16px; cursor: pointer;">
+                <span style="font-size: 13px; font-weight: 700; color: #FFFFFF;">Популярная услуга</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. Название услуги -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Название услуги *</label>
+            <input type="text" id="serviceEditName" class="form-input" required placeholder="Например: Авторская стрижка NOIR (Signature Cut)">
+          </div>
+
+          <!-- 3. Цена и Длительность -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div>
+              <label class="form-label">Стоимость (₫) *</label>
+              <input type="number" id="serviceEditPrice" class="form-input" required min="0" step="10000" placeholder="450000">
+            </div>
+            <div>
+              <label class="form-label">Длительность (минут) *</label>
+              <input type="number" id="serviceEditDuration" class="form-input" required min="5" step="5" placeholder="60">
+            </div>
+          </div>
+
+          <!-- 4. Краткое описание -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="display: flex; justify-content: space-between;">
+              <span>Краткое описание (для карточки и визарда) *</span>
+              <span style="font-size: 11px; color: var(--text-dim);">1-2 предложения</span>
+            </label>
+            <textarea id="serviceEditShortDesc" class="form-textarea" rows="2" required placeholder="Консультация стилиста, мытье головы премиальным шампунем, стрижка ножницами и машинкой, стайлинг"></textarea>
+          </div>
+
+          <!-- 5. Полное подробное описание -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="display: flex; justify-content: space-between;">
+              <span>Полное описание процедуры (для окна «О процедуре»)</span>
+              <span style="font-size: 11px; color: var(--accent-gold);">Подробно для гостей</span>
+            </label>
+            <textarea id="serviceEditFullDesc" class="form-textarea" rows="3" placeholder="Фирменная стрижка с индивидуальной адаптацией под форму черепа и черты лица..."></textarea>
+          </div>
+
+          <!-- 6. Что входит в стоимость (Протокол процедуры) -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label class="form-label" style="margin-bottom: 0;">Что входит в стоимость (Протокол процедуры):</label>
+              <button type="button" class="btn btn-secondary" onclick="addServiceIncludeItem()" style="padding: 3px 10px; font-size: 11px;">
+                + Добавить пункт
+              </button>
+            </div>
+            <div id="serviceEditIncludesList" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Dynamic list of inputs with delete buttons -->
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <button type="button" class="btn" id="serviceDeleteBtn" onclick="deleteCurrentService()" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--color-danger); font-size: 12px; padding: 8px 14px; display: none;">
+              Удалить услугу
+            </button>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
+            <button type="submit" class="btn btn-primary" id="saveServiceSubmitBtn">Сохранить услугу</button>
+          </div>
         </div>
       </form>
     </div>
