@@ -7,6 +7,18 @@
   <meta name="description" content="PRIME Space в Нячанге: многофункциональное 4-этажное пространство для развития детей и взрослых. Йога, танцы, 3D-лаборатория, творчество, коворкинг, кафе, бьюти и консультации.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+  <!-- Автоопределение устройства: смартфоны автоматически открывают оптимизированную мобильную версию -->
+  <script>
+    (function() {
+      var isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+      var urlParams = new URLSearchParams(window.location.search);
+      var forceDesktop = urlParams.get('desktop') === '1' || sessionStorage.getItem('prime_force_desktop') === '1';
+      if (isMobileDevice && !forceDesktop) {
+        window.location.replace('mobile.html' + window.location.search);
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -270,8 +282,13 @@
         </div>
       </div>
 
-      <div class="footer-bottom">
+      <div class="footer-bottom" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div>© 2026 PRIME Space. Все права защищены.</div>
+        <div>
+          <a href="mobile.html?mobile=1" id="switchToMobileBtn" style="color: #94A3B8; text-decoration: underline; font-size: 13px;">
+            📱 Открыть компактную версию для смартфона
+          </a>
+        </div>
         <div>Среда, в которой хочется остаться.</div>
       </div>
     </div>
