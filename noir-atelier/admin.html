@@ -163,14 +163,55 @@
           <input type="password" id="pinInput" class="form-input" placeholder="••••" maxlength="8" style="text-align: center; font-size: 24px; letter-spacing: 8px; font-family: var(--font-mono);" autofocus required>
         </div>
         <div id="pinErrorMsg" style="display: none; color: var(--color-danger); font-size: 13px; margin-bottom: 16px;">
-          Неверный PIN-код. Попробуйте 1234
+          Неверный PIN-код. Проверьте правильность ввода
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">
           Войти в систему →
         </button>
+        <div style="margin-top: 18px;">
+          <a href="javascript:void(0)" onclick="openPinRecoveryModal()" style="font-size: 12px; color: var(--accent-gold); text-decoration: none; opacity: 0.85; transition: opacity 0.2s ease;">
+            Забыли PIN-код? Восстановление доступа →
+          </a>
+        </div>
       </form>
     </div>
   </div>
+
+  <!-- Modal: Восстановление забытого PIN-кода -->
+  <div class="modal-overlay" id="pinRecoveryModal" style="display: none; z-index: 10000;">
+    <div class="modal-card" style="max-width: 440px; padding: 32px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>🔑</span>
+          <span>Восстановление доступа к CRM</span>
+        </h3>
+        <button type="button" class="btn btn-secondary" onclick="closePinRecoveryModal()" style="padding: 4px 10px; font-size: 13px; border-radius: var(--radius-sm);">✕</button>
+      </div>
+
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 18px;">
+        Если вы забыли PIN-код администратора, вы можете сбросить его на заводской код по умолчанию <strong>(1234)</strong>. При подключении облачного сервера ссылка для сброса будет моментально выслана на ваш email.
+      </p>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-size: 12px;">Email владельца ателье</label>
+        <input type="email" id="recoveryEmailInput" class="form-input" placeholder="owner@noir-atelier.com" value="owner@noir-atelier.com" style="font-size: 13px;">
+      </div>
+
+      <div id="recoverySuccessNotice" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 12px; color: #10B981;">
+        ✓ PIN-код успешно сброшен на заводской <strong>1234</strong>! Теперь вы можете войти в систему.
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closePinRecoveryModal()" style="padding: 8px 16px; font-size: 12px;">
+          Отмена
+        </button>
+        <button type="button" class="btn btn-primary" onclick="confirmResetPinToDefault()" style="padding: 8px 18px; font-size: 12px; font-weight: 700;">
+          Сбросить PIN на 1234
+        </button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Admin Main Layout -->
   <div class="admin-layout" id="adminMainLayout" style="display: none;">
@@ -228,7 +269,11 @@
           <div style="font-size: 12px; color: var(--text-dim);" id="timelineCurrentDateDisplay">Сегодня</div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="btn btn-secondary" onclick="openPinChangeModal()" style="padding: 6px 12px; font-size: 12px; border-color: rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 6px;" title="Изменить PIN-код администратора">
+            <span>🔒</span>
+            <span>Сменить PIN</span>
+          </button>
           <button type="button" class="btn btn-secondary" id="timelineRefreshBtn" style="padding: 6px 14px; font-size: 12px;">
             🔄 Обновить
           </button>
@@ -237,6 +282,7 @@
           </button>
         </div>
       </header>
+
 
       <!-- Content Views -->
       <div class="admin-content">
@@ -1399,6 +1445,63 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal: Смена PIN-кода администратора -->
+  <div class="modal-overlay" id="adminPinChangeModal" style="display: none; z-index: 10000;">
+    <div class="modal-card" style="max-width: 440px; padding: 32px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <span>🔒</span>
+          <span>Безопасность &bull; Смена PIN-кода</span>
+        </h3>
+        <button type="button" class="btn btn-secondary" onclick="closePinChangeModal()" style="padding: 4px 10px; font-size: 13px; border-radius: var(--radius-sm);">✕</button>
+      </div>
+
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;">
+        Задайте новый 4-значный цифровой PIN-код для входа в панель управления CRM на всех устройствах.
+      </p>
+
+      <form id="adminPinChangeForm" onsubmit="handleAdminPinChangeSubmit(event)">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 12px;">Текущий PIN-код</label>
+          <input type="password" id="currentPinInput" class="form-input" placeholder="••••" maxlength="8" style="font-size: 18px; letter-spacing: 4px; font-family: var(--font-mono);" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 12px;">Новый PIN-код (4–6 цифр)</label>
+          <input type="password" id="newPinInput" class="form-input" placeholder="••••" maxlength="8" style="font-size: 18px; letter-spacing: 4px; font-family: var(--font-mono);" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 12px;">Повторите новый PIN-код</label>
+          <input type="password" id="confirmNewPinInput" class="form-input" placeholder="••••" maxlength="8" style="font-size: 18px; letter-spacing: 4px; font-family: var(--font-mono);" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 12px;">Email владельца для восстановления</label>
+          <input type="email" id="changeOwnerEmailInput" class="form-input" placeholder="owner@noir-atelier.com" style="font-size: 13px;">
+        </div>
+
+        <div id="pinChangeErrorMsg" style="display: none; color: var(--color-danger); font-size: 12px; margin-bottom: 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 12px; border-radius: var(--radius-sm);">
+          Ошибка смены PIN-кода
+        </div>
+
+        <div id="pinChangeSuccessMsg" style="display: none; color: #10B981; font-size: 12px; margin-bottom: 14px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 12px; border-radius: var(--radius-sm);">
+          ✓ Новый PIN-код успешно сохранён и активирован!
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" onclick="closePinChangeModal()" style="padding: 8px 16px; font-size: 12px;">
+            Отмена
+          </button>
+          <button type="submit" class="btn btn-primary" style="padding: 8px 18px; font-size: 12px; font-weight: 700;">
+            Сохранить новый PIN
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
   <!-- PRINT CONTAINER: ПОЛИГРАФИЧЕСКИЙ ДОКУМЕНТ А4 ПОД ПЕЧАТЬ -->
   <div id="printableDocumentArea" style="display: none;">
