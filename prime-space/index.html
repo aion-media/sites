@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRIME Space | Пространство, где развиваются люди и семьи</title>
+  <meta name="description" content="PRIME Space в Нячанге: многофункциональное 4-этажное пространство для развития детей и взрослых. Йога, танцы, 3D-лаборатория, творчество, коворкинг, кафе, бьюти и консультации.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand-wrap">
+        <div>
+          <div class="brand-title">PRIME</div>
+          <div class="brand-sub">Space to grow together</div>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="#about" class="nav-link">О концепции</a></li>
+          <li><a href="#schedule" class="nav-link">Расписание недели</a></li>
+          <li><a href="#spaces" class="nav-link">9 Пространств</a></li>
+          <li><a href="#rental" class="nav-link">Аренда экспертам</a></li>
+          <li><a href="#contacts" class="nav-link">Контакты</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a href="admin.html" class="btn btn-outline btn-sm" title="Панель администратора PRIME Space">
+          🔒 Вход в CRM
+        </a>
+        <a href="#schedule" class="btn btn-primary btn-sm">
+          Записаться на занятие ›
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="about">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-tag" style="background: var(--prime-sage-olive); color: #FFFFFF; border: none; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;">
+          <span>4-этажный дом развития • Нячанг, Центр</span>
+        </div>
+
+        <h1 class="hero-title">
+          Пространство, где <br>
+          <span style="color: var(--prime-cta-blue);">развиваются люди.</span>
+        </h1>
+
+        <p class="hero-desc">
+          Мы не разделяем развитие взрослых и детей — мы создаем культуру развития всей семьи. 
+          Пока вы практикуете йогу, общаетесь на бизнес-завтраке или работаете в коворкинге, 
+          дети рядом создают проекты в лаборатории и находят друзей.
+        </p>
+
+        <div class="hero-feature-pills">
+          <div class="hero-pill"><span class="pill-check">✓</span> 9 функциональных пространств</div>
+          <div class="hero-pill"><span class="pill-check">✓</span> Развитие всей семьи в единой среде</div>
+          <div class="hero-pill"><span class="pill-check">✓</span> 3D-печать и робототехника</div>
+          <div class="hero-pill"><span class="pill-check">✓</span> Спешелти-кофе и полезные перекусы</div>
+        </div>
+
+        <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+          <a href="#schedule" class="btn btn-primary" style="padding: 14px 32px; font-size: 15px;">
+            Смотреть расписание на неделю ›
+          </a>
+          <a href="#rental" class="btn btn-outline" style="padding: 14px 28px; font-size: 15px;">
+            Для экспертов и авторов ›
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-image-card">
+          <img src="assets/building.jpg" alt="PRIME Space Building Nha Trang">
+        </div>
+        <div class="hero-float-card">
+          <div class="hero-float-icon">☕</div>
+          <div class="hero-float-text">
+            <h4>PRIME CAFE & Lounge</h4>
+            <p>Утренний кофе, нетворкинг и семейные встречи</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dual Care Banner (Взрослые + Дети) -->
+  <section class="container">
+    <div class="dual-care-banner">
+      <div class="dual-care-card">
+        <div class="dual-care-icon">☕</div>
+        <div class="dual-care-content">
+          <h3>Пока вы ждете детей или после практик</h3>
+          <p>Вы можете продуктивно поработать в тихом коворкинге, провести созвон или отдохнуть за чашкой спешелти-кофе в PRIME CAFE.</p>
+        </div>
+      </div>
+      <div class="dual-care-card">
+        <div class="dual-care-icon">🧸</div>
+        <div class="dual-care-content">
+          <h3>Пока вы занимаетесь собой</h3>
+          <p>Отдайте детей в игровую с внимательным тьютором, в 3D-лабораторию или в параллельные творческие группы.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Weekly Schedule Section -->
+  <section class="section" id="schedule">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Живое расписание PRIME</span>
+        <h2 class="section-title">Расписание классов и событий</h2>
+        <p class="section-sub">Выберите день недели, направление и запишитесь онлайн — количество мест в группах ограничено для комфорта каждого гостя</p>
+      </div>
+
+      <div class="schedule-container">
+        <!-- Переключатель дней недели -->
+        <div class="days-nav" id="daysNav">
+          <!-- Заполняется динамически через js/app.js -->
+        </div>
+
+        <!-- Фильтры категорий -->
+        <div class="filter-toolbar">
+          <div class="category-chips">
+            <button class="cat-chip active" data-cat="all">Все направления</button>
+            <button class="cat-chip" data-cat="kids">👶 Для детей</button>
+            <button class="cat-chip" data-cat="adults">🧘 Для взрослых</button>
+            <button class="cat-chip" data-cat="mind">💡 Идеи & Бизнес</button>
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted);">
+            🕒 Часы работы пространства: <strong>08:30 – 21:30</strong>
+          </div>
+        </div>
+
+        <!-- Сетка занятий -->
+        <div class="schedule-grid" id="scheduleGrid">
+          <!-- Карточки генерируются динамически через js/app.js -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 Spaces of PRIME Section -->
+  <section class="section" id="spaces" style="background: var(--bg-soft);">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Архитектура возможностей</span>
+        <h2 class="section-title">9 Пространств PRIME</h2>
+        <p class="section-sub">Каждый этаж нашего здания спроектирован под разные форматы развития: от телесных практик до 3D-печати и приватных кабинетов</p>
+      </div>
+
+      <div class="spaces-grid" id="spacesGrid">
+        <!-- Карточки пространств рендерятся через js/app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Expert & Specialist Rental Section -->
+  <section class="section" id="rental">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Для преподавателей и авторов</span>
+        <h2 class="section-title">Аренда кабинетов и залов для экспертов</h2>
+        <p class="section-sub">Проводите консультации, мастер-классы, массаж или стратегические сессии в готовом премиальном пространстве с готовым потоком аудитории</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+        <div class="space-card">
+          <div>
+            <div class="space-card-top">
+              <span class="space-card-badge" style="background: rgba(2, 132, 199, 0.12); color: #0284C7">
+                👤 PRIME PRIVATE
+              </span>
+              <span class="space-floor">3 этаж</span>
+            </div>
+            <h3 class="space-card-title">Кабинет индивидуальной работы</h3>
+            <p class="space-card-desc">Идеально для психологов, коучей, логопедов и частных диагностик. Шумоизоляция, мягкие кресла, камерная конфиденциальная обстановка.</p>
+          </div>
+          <div style="margin-top: 16px;">
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Почасовая аренда или абонемент резидента</div>
+            <a href="https://t.me/prime_space_nhatrang" target="_blank" class="btn btn-outline btn-sm" style="width: 100%;">
+              Забронировать кабинет в Telegram ›
+            </a>
+          </div>
+        </div>
+
+        <div class="space-card">
+          <div>
+            <div class="space-card-top">
+              <span class="space-card-badge" style="background: rgba(219, 39, 119, 0.12); color: #DB2777">
+                🌸 PRIME BALANCE
+              </span>
+              <span class="space-floor">3 этаж</span>
+            </div>
+            <h3 class="space-card-title">Кабинет телесных практик и SPA</h3>
+            <p class="space-card-desc">Пространство для массажистов, остеопатов, косметологов и восстановительной терапии. Профессиональная кушетка, гигиеническая зона, расслабляющий свет.</p>
+          </div>
+          <div style="margin-top: 16px;">
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Смены и почасовые слоты</div>
+            <a href="https://t.me/prime_space_nhatrang" target="_blank" class="btn btn-outline btn-sm" style="width: 100%;">
+              Забронировать кабинет в Telegram ›
+            </a>
+          </div>
+        </div>
+
+        <div class="space-card">
+          <div>
+            <div class="space-card-top">
+              <span class="space-card-badge" style="background: rgba(224, 109, 83, 0.12); color: #E06D53">
+                🧘 PRIME BODY & MIND
+              </span>
+              <span class="space-floor">2 и 4 этажи</span>
+            </div>
+            <h3 class="space-card-title">Большие залы для мастер-классов</h3>
+            <p class="space-card-desc">Панорамный зал BODY (до 30 человек) для тренингов, танцев, йоги или лекторий MIND (до 20 человек) со смарт-экраном для презентаций и дебатов.</p>
+          </div>
+          <div style="margin-top: 16px;">
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Для мероприятий и курсов</div>
+            <a href="https://t.me/prime_space_nhatrang" target="_blank" class="btn btn-outline btn-sm" style="width: 100%;">
+              Обсудить мероприятие в Telegram ›
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" id="contacts">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>PRIME</h3>
+          <p>
+            Space to Grow Together. Пространство развития семьи, сообществ и экспертов в Нячанге.
+          </p>
+          <div style="margin-top: 20px; font-size: 14px; color: #E2E8F0;">
+            📍 Нячанг, Вьетнам • Отдельное 4-этажное здание PRIME Space
+          </div>
+          <div style="margin-top: 6px; font-size: 14px; color: #94A3B8;">
+            🕒 Ежедневно с 08:30 до 21:30
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Навигация</h4>
+          <ul class="footer-links">
+            <li><a href="#about">О концепции</a></li>
+            <li><a href="#schedule">Недельное расписание</a></li>
+            <li><a href="#spaces">9 пространств PRIME</a></li>
+            <li><a href="#rental">Аренда для мастеров</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Администрация</h4>
+          <ul class="footer-links">
+            <li><a href="admin.html" style="color: #F59E0B; font-weight: 700;">Панель управления CRM 🔒</a></li>
+            <li><a href="https://t.me/prime_space_nhatrang" target="_blank">Telegram канал сообщества</a></li>
+            <li><a href="tel:+84912345678">Ресепшн: +84 912 345 678</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 PRIME Space. Все права защищены.</div>
+        <div>Среда, в которой хочется остаться.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal Booking Dialog -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="modalCloseBtn">✕</button>
+
+      <div id="bookingFormFields">
+        <h3 class="modal-title">Онлайн-запись на занятие</h3>
+        <p class="modal-subtitle">Подтверждение бронирования места в группе</p>
+
+        <!-- Сводка занятия -->
+        <div class="booking-summary-card" id="bookingSummary">
+          <!-- Заполняется в js/app.js -->
+        </div>
+
+        <form id="bookingForm">
+          <div class="form-group">
+            <label class="form-label" for="guestName">Ваше имя (или имя ребенка):</label>
+            <input type="text" id="guestName" class="form-input" placeholder="Например: Анна Смирнова (дочь Алиса)" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guestPhone">Телефон или Telegram:</label>
+            <input type="text" id="guestPhone" class="form-input" placeholder="+84 90 123 4567 или @username" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guestSpots">Количество участников:</label>
+            <select id="guestSpots" class="form-input">
+              <option value="1">1 человек (стандартная запись)</option>
+              <option value="2">2 человека (например, мама + ребенок)</option>
+              <option value="3">3 человека</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guestComment">Пожелания / вопросы (опционально):</label>
+            <input type="text" id="guestComment" class="form-input" placeholder="Возраст ребенка, уровень подготовки или пожелания">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 10px;">
+            Подтвердить запись ✨
+          </button>
+        </form>
+      </div>
+
+      <!-- Сообщение об успехе -->
+      <div id="bookingSuccessMsg" style="display: none; text-align: center; padding: 24px 0;">
+        <div style="font-size: 54px; margin-bottom: 16px;">🎉</div>
+        <h3 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Вы успешно записаны!</h3>
+        <p style="font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;">
+          Ждем вас в PRIME Space! Наш администратор также увидит вашу бронь в системе расписания.
+        </p>
+        <button type="button" class="btn btn-dark" onclick="document.getElementById('bookingModal').classList.remove('open')">
+          Понятно, спасибо
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
