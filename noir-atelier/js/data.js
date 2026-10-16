@@ -608,6 +608,7 @@ const DEFAULT_CLIENTS = [
     telegram: "@volkov_alex",
     gender: "male",
     category: "vip",
+    discountPercent: 10,
     notes: "Предпочитает эспрессо без сахара перед началом стрижки. Не любит громкую музыку.",
     hairNotes: "Жесткие густые волосы, стрижка по форме черепа, низкий фейд 1.5 мм с идеальной растушёвкой. Чувствительная кожа на затылке (обработка тальком без спирта).",
     firstVisit: "2026-06-15",
@@ -626,6 +627,7 @@ const DEFAULT_CLIENTS = [
     telegram: "@kate_smirnova",
     gender: "female",
     category: "regular",
+    discountPercent: 5,
     notes: "Любит зелёный чай с жасмином. Ценит бережное отношение к длине у лица.",
     hairNotes: "Тонкие пористые волосы после осветления. Использовать термозащиту до 220°C, формулу Gloss 9.12 + 1.5%. Не использовать филировочные ножницы.",
     firstVisit: "2026-07-20",
@@ -644,6 +646,7 @@ const DEFAULT_CLIENTS = [
     telegram: "@dmitry_artem",
     gender: "male",
     category: "regular",
+    discountPercent: 10,
     notes: "Приходят всегда вместе по выходным. Сыну Артёму 9 лет, любит какао и конфеты.",
     hairNotes: "Отец: классический андеркат, укладка помадой. Сын: выбритый зигзаг или молния на левом виске, текстурный кроп сверху.",
     firstVisit: "2026-08-05",
@@ -662,6 +665,7 @@ const DEFAULT_CLIENTS = [
     telegram: "@anastasia_bel",
     gender: "female",
     category: "new",
+    discountPercent: 0,
     notes: "Впервые пришла по рекомендации. Интересуется уходом за поврежденными волосами после моря.",
     hairNotes: "Сухие концы после солнца и соленой воды. Рекомендовано молекулярное восстановление Tokio Inkarami и домашняя маска с липидами.",
     firstVisit: "2026-10-16",
@@ -680,6 +684,7 @@ const DEFAULT_CLIENTS = [
     telegram: "@voronov_m",
     gender: "male",
     category: "new",
+    discountPercent: 0,
     notes: "Записан на завтра на моделирование бороды перед важными переговорами.",
     hairNotes: "Густая жесткая борода, четкие контуры щек и шеи, горячий компресс с маслом сандала.",
     firstVisit: "2026-10-17",
@@ -956,7 +961,12 @@ class NoirDataService {
     try {
       const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.CLIENTS));
       if (Array.isArray(stored) && stored.length > 0) {
-        return stored;
+        return stored.map(c => ({
+          ...c,
+          discountPercent: (c.discountPercent !== undefined && c.discountPercent !== null)
+            ? Math.max(0, Math.min(100, parseInt(c.discountPercent, 10) || 0))
+            : (c.category === 'vip' ? 10 : (c.category === 'regular' ? 5 : 0))
+        }));
       }
       return DEFAULT_CLIENTS;
     } catch (e) {
@@ -979,8 +989,30 @@ class NoirDataService {
     const clients = this.getClients();
     return clients.find(c => {
       const cNorm = this.normalizePhone(c.phone);
-      return cNorm && (cNorm === norm || (norm.length >= 10 && cNorm.endsWith(norm.slice(-10))));
+      return cNorm && (cNorm === norm || (norm.length >= 10 && cNorm.endsWith(norm.slice(-10))) || (cNorm.length >= 10 && norm.endsWith(cNorm.slice(-10))));
     }) || null;
+  }
+
+  getClientByTelegram(telegram) {
+    if (!telegram) return null;
+    const cleanTg = String(telegram).replace(/^@/, '').toLowerCase().trim();
+    if (!cleanTg) return null;
+    const clients = this.getClients();
+    return clients.find(c => {
+      if (!c.telegram) return false;
+      return c.telegram.replace(/^@/, '').toLowerCase().trim() === cleanTg;
+    }) || null;
+  }
+
+  findClientByContact(contact) {
+    if (!contact) return null;
+    const trimmed = String(contact).trim();
+    if (trimmed.startsWith('@')) {
+      return this.getClientByTelegram(trimmed);
+    }
+    const byPhone = this.getClientByPhone(trimmed);
+    if (byPhone) return byPhone;
+    return this.getClientByTelegram(trimmed);
   }
 
   addClient(clientData) {
@@ -994,6 +1026,7 @@ class NoirDataService {
       telegram: clientData.telegram || "",
       gender: clientData.gender || "male",
       category: clientData.category || "new",
+      discountPercent: Math.max(0, Math.min(100, parseInt(clientData.discountPercent, 10) || 0)),
       notes: clientData.notes || "",
       hairNotes: clientData.hairNotes || "",
       firstVisit: clientData.firstVisit || new Date().toISOString().split('T')[0],
@@ -1015,6 +1048,9 @@ class NoirDataService {
     if (idx !== -1) {
       if (updatedFields.phone) {
         updatedFields.normalizedPhone = this.normalizePhone(updatedFields.phone);
+      }
+      if (updatedFields.discountPercent !== undefined) {
+        updatedFields.discountPercent = Math.max(0, Math.min(100, parseInt(updatedFields.discountPercent, 10) || 0));
       }
       clients[idx] = { ...clients[idx], ...updatedFields };
       this.saveClients(clients);
