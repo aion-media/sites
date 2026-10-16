@@ -15,6 +15,36 @@ function initApp() {
   setupFAQ();
   setupSmoothScroll();
   setupServiceDetailModal();
+  setupAppLiveSync();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookSpec = urlParams.get('bookSpec');
+  const bookSrv = urlParams.get('bookSrv');
+  if (bookSpec || bookSrv) {
+    setTimeout(() => {
+      if (typeof window.openBookingModal === 'function') {
+        window.openBookingModal(bookSrv, bookSpec);
+      }
+    }, 200);
+  }
+}
+
+function setupAppLiveSync() {
+  window.addEventListener('storage', (e) => {
+    if (e.key === window.noirData.STORAGE_KEYS.SPECIALISTS) {
+      renderSpecialistsGrid();
+    }
+    if (e.key === window.noirData.STORAGE_KEYS.SERVICES) {
+      renderCategoryTabs();
+      renderServicesGrid();
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    renderSpecialistsGrid();
+    renderCategoryTabs();
+    renderServicesGrid();
+  });
 }
 
 function renderCategoryTabs() {
