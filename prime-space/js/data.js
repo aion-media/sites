@@ -644,6 +644,7 @@ class PrimeDataService {
       SCHEDULE: "prime_space_schedule_v1",
       MASTERS: "prime_space_masters_v1",
       RENTALS: "prime_space_rentals_v1",
+      CLIENTS: "prime_space_clients_v1",
       SETTINGS: "prime_space_settings_v1"
     };
   }
@@ -793,6 +794,10 @@ class PrimeDataService {
 
     item.participants.push(newParticipant);
     this.saveSchedule(list);
+
+    // Автоматически фиксируем / обновляем карточку гостя в базе клиентов
+    this.recordClientBooking(guestData, item);
+
     return { success: true, participant: newParticipant, item };
   }
 
@@ -857,6 +862,122 @@ class PrimeDataService {
     rentals = rentals.filter(r => r.id !== id);
     this.saveRentals(rentals);
     return true;
+  }
+
+  // --- БАЗА КЛИЕНТОВ (CLIENTS CRM) ---
+  getClients() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEYS.CLIENTS);
+      if (data) return JSON.parse(data);
+      return this.rebuildClientsFromSchedule();
+    } catch (e) {
+      return this.rebuildClientsFromSchedule();
+    }
+  }
+
+  saveClients(clients) {
+    localStorage.setItem(this.STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+  }
+
+  rebuildClientsFromSchedule() {
+    const schedule = this.getSchedule();
+    const clientsMap = {};
+
+    schedule.forEach(item => {
+      if (!item.participants) return;
+      item.participants.forEach(p => {
+        const key = (p.phone || p.name).trim().toLowerCase();
+        if (!clientsMap[key]) {
+          clientsMap[key] = {
+            id: "c-" + Math.abs(this.hashCode(key)),
+            name: p.name,
+            phone: p.phone,
+            notes: "",
+            firstVisit: p.createdAt || "2026-10-14",
+            visitsCount: 0,
+            history: []
+          };
+        }
+
+        clientsMap[key].visitsCount += 1;
+        clientsMap[key].history.push({
+          lessonId: item.id,
+          lessonTitle: item.title,
+          dayOfWeek: item.dayOfWeek,
+          time: `${item.timeStart} – ${item.timeEnd}`,
+          spaceId: item.spaceId,
+          masterName: item.masterName,
+          price: item.price,
+          status: p.status || "confirmed",
+          date: p.createdAt || "2026-10-15"
+        });
+      });
+    });
+
+    const clientsList = Object.values(clientsMap).sort((a, b) => b.visitsCount - a.visitsCount);
+    this.saveClients(clientsList);
+    return clientsList;
+  }
+
+  recordClientBooking(guestData, lessonItem) {
+    const clients = this.getClients();
+    const key = (guestData.phone || guestData.name).trim().toLowerCase();
+    let client = clients.find(c => (c.phone || c.name).trim().toLowerCase() === key);
+
+    const historyItem = {
+      lessonId: lessonItem.id,
+      lessonTitle: lessonItem.title,
+      dayOfWeek: lessonItem.dayOfWeek,
+      time: `${lessonItem.timeStart} – ${lessonItem.timeEnd}`,
+      spaceId: lessonItem.spaceId,
+      masterName: lessonItem.masterName,
+      price: lessonItem.price,
+      status: "confirmed",
+      date: new Date().toISOString().split("T")[0]
+    };
+
+    if (client) {
+      client.visitsCount = (client.visitsCount || 0) + 1;
+      if (!client.history) client.history = [];
+      client.history.unshift(historyItem);
+      if (guestData.name && (!client.name || client.name.length < guestData.name.length)) {
+        client.name = guestData.name;
+      }
+    } else {
+      client = {
+        id: "c-" + Date.now().toString(36),
+        name: guestData.name,
+        phone: guestData.phone,
+        notes: guestData.comment || "",
+        firstVisit: new Date().toISOString().split("T")[0],
+        visitsCount: 1,
+        history: [historyItem]
+      };
+      clients.unshift(client);
+    }
+
+    this.saveClients(clients);
+    return client;
+  }
+
+  updateClientNotes(clientId, notes) {
+    const clients = this.getClients();
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      client.notes = notes;
+      this.saveClients(clients);
+      return true;
+    }
+    return false;
+  }
+
+  hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
   }
 
   // Вспомогательный метод форматирования денег
