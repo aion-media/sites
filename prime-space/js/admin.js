@@ -425,6 +425,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!tbody) return;
 
       let clients = window.primeData.getClients();
+      if (!clients || clients.length === 0) {
+        clients = window.primeData.rebuildClientsFromSchedule();
+      }
       const totalCount = clients.length;
 
       // Поиск по имени, телефону, никнейму или заметкам
@@ -503,6 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </td>
             <td>
               <div style="font-weight: 600; color: #334155;">${c.phone || "—"}</div>
+              ${c.telegram ? `<div style="font-size: 11px; color: #435667; margin-top: 2px;"><a href="https://t.me/${c.telegram.replace('@', '')}" target="_blank" style="color: inherit; text-decoration: none;">✈️ ${c.telegram}</a></div>` : ''}
             </td>
             <td style="text-align: center;">
               ${visitsBadge}
@@ -555,7 +559,10 @@ document.addEventListener("DOMContentLoaded", () => {
         badgeEl.style.color = isRegular ? "#586047" : "#64748B";
       }
 
-      document.getElementById("clientModalPhone").textContent = `📞 ${client.phone || "—"}`;
+      const tgLink = client.telegram 
+        ? `<a href="https://t.me/${client.telegram.replace('@', '')}" target="_blank" style="color: #435667; text-decoration: underline; font-weight: 600;">✈️ ${client.telegram}</a>`
+        : "";
+      document.getElementById("clientModalPhone").innerHTML = `<span>📞 ${client.phone || "—"}</span> ${tgLink ? `<span style="margin-left: 10px;">${tgLink}</span>` : ''}`;
       document.getElementById("clientModalFirstVisit").textContent = `🗓 Первый визит: ${client.firstVisit || "—"}`;
       document.getElementById("clientModalVisitsCount").textContent = `⭐️ Всего посещений: ${visits}`;
 
@@ -608,6 +615,16 @@ document.addEventListener("DOMContentLoaded", () => {
     },
 
     bindClientsEvents() {
+      // Кнопка обновления базы из расписания
+      const btnRebuild = document.getElementById("btnRebuildClients");
+      if (btnRebuild) {
+        btnRebuild.addEventListener("click", () => {
+          window.primeData.rebuildClientsFromSchedule();
+          this.renderClientsList();
+          alert("База клиентов успешно синхронизирована с расписанием!");
+        });
+      }
+
       // Поиск по вводу
       const searchInput = document.getElementById("clientSearchInput");
       if (searchInput) {
