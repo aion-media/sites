@@ -474,9 +474,15 @@ class NoirDataService {
   }
 
   initDatabase() {
-    localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(DEFAULT_SALON_INFO));
-    localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
-    localStorage.setItem(this.STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
+    if (!localStorage.getItem(this.STORAGE_KEYS.SALON)) {
+      localStorage.setItem(this.STORAGE_KEYS.SALON, JSON.stringify(DEFAULT_SALON_INFO));
+    }
+    if (!localStorage.getItem(this.STORAGE_KEYS.CATEGORIES)) {
+      localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+    }
+    if (!localStorage.getItem(this.STORAGE_KEYS.SERVICES)) {
+      localStorage.setItem(this.STORAGE_KEYS.SERVICES, JSON.stringify(DEFAULT_SERVICES));
+    }
     if (!localStorage.getItem(this.STORAGE_KEYS.SPECIALISTS)) {
       localStorage.setItem(this.STORAGE_KEYS.SPECIALISTS, JSON.stringify(DEFAULT_SPECIALISTS));
     }
