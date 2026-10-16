@@ -226,6 +226,20 @@ function loadDashboard() {
       openCreateSpecialistModal();
     }, 150);
   }
+
+  const openService = urlParams.get('openService');
+  const addService = urlParams.get('addService');
+  if (openService) {
+    switchTab('services');
+    setTimeout(() => {
+      openEditServiceModal(openService);
+    }, 150);
+  } else if (addService === '1') {
+    switchTab('services');
+    setTimeout(() => {
+      openCreateServiceModal();
+    }, 150);
+  }
 }
 
 function updateKPIs() {
@@ -667,22 +681,46 @@ function renderServicesAdmin() {
         <div style="display: flex; flex-direction: column; gap: 10px;">
     `;
 
-    catServices.forEach(s => {
+    if (catServices.length === 0) {
       html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <div>
-            <div style="font-weight: 700; color: #FFFFFF; font-size: 14px;">${s.name}</div>
-            <div style="font-size: 12px; color: var(--text-dim);">${s.duration} мин • ${s.shortDesc}</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <span style="font-weight: 800; color: var(--accent-gold); font-size: 14px;">${window.noirData.formatMoney(s.price)}</span>
-            <button type="button" class="btn btn-secondary" onclick="openEditServiceModal('${s.id}')" style="padding: 4px 10px; font-size: 12px;">
-              Редактировать
-            </button>
-          </div>
+        <div style="padding: 16px; text-align: center; color: var(--text-dim); font-size: 13px; background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle);">
+          В этой категории пока нет услуг. Нажмите «+ Добавить услугу» выше.
         </div>
       `;
-    });
+    } else {
+      catServices.forEach(s => {
+        const popularBadge = s.popular 
+          ? `<span style="background: rgba(201, 162, 77, 0.15); color: var(--accent-gold); border: 1px solid rgba(201, 162, 77, 0.3); border-radius: 12px; padding: 2px 8px; font-size: 10px; margin-left: 6px; font-weight: 800; text-transform: uppercase;">Хит</span>` 
+          : '';
+        const includesCount = (s.includes && Array.isArray(s.includes)) ? s.includes.length : 0;
+
+        html += `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <div style="max-width: 70%;">
+              <div style="font-weight: 700; color: #FFFFFF; font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                ${s.name} ${popularBadge}
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin-top: 3px;">
+                ${s.duration} мин • ${s.shortDesc || 'Без краткого описания'}
+              </div>
+              ${includesCount > 0 ? `
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                  📋 Протокол: ${includesCount} ${includesCount === 1 ? 'пункт' : (includesCount < 5 ? 'пункта' : 'пунктов')}
+                </div>
+              ` : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span style="font-weight: 800; color: var(--accent-gold); font-size: 14px; white-space: nowrap;">
+                ${window.noirData.formatMoney(s.price)}
+              </span>
+              <button type="button" class="btn btn-secondary" onclick="openEditServiceModal('${s.id}')" style="padding: 5px 12px; font-size: 12px; white-space: nowrap;">
+                Редактировать
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    }
 
     html += `</div></div>`;
   });
@@ -979,6 +1017,53 @@ function setupModals() {
       renderTimeline();
     });
   }
+
+  // Редактирование и создание услуги
+  const serviceForm = document.getElementById('adminServiceForm');
+  if (serviceForm) {
+    serviceForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('serviceEditId').value;
+      const categoryId = document.getElementById('serviceEditCategory').value;
+      const popular = document.getElementById('serviceEditPopular').checked;
+      const name = document.getElementById('serviceEditName').value.trim();
+      const price = parseInt(document.getElementById('serviceEditPrice').value, 10) || 0;
+      const duration = parseInt(document.getElementById('serviceEditDuration').value, 10) || 60;
+      const shortDesc = document.getElementById('serviceEditShortDesc').value.trim();
+      const fullDesc = document.getElementById('serviceEditFullDesc').value.trim();
+
+      const includes = [];
+      document.querySelectorAll('#serviceEditIncludesList .service-include-input').forEach(inp => {
+        const val = inp.value.trim();
+        if (val) includes.push(val);
+      });
+
+      const servicePayload = {
+        categoryId,
+        name,
+        price,
+        duration,
+        popular,
+        shortDesc,
+        fullDesc: fullDesc || shortDesc,
+        includes: includes.length > 0 ? includes : [
+          "Консультация стилиста NOIR",
+          "Основная процедура с авторской адаптацией",
+          "Финишный стайлинг и рекомендации"
+        ]
+      };
+
+      if (id) {
+        window.noirData.updateService(id, servicePayload);
+      } else {
+        window.noirData.addService(servicePayload);
+      }
+
+      const modal = document.getElementById('adminServiceModal');
+      if (modal) modal.classList.remove('active');
+      renderServicesAdmin();
+    });
+  }
 }
 
 window.openQuickBookingFor = function(specialistId, time) {
@@ -1073,3 +1158,141 @@ function populateCategoryCheckboxes(selectedCategories = []) {
 
   container.innerHTML = html;
 }
+
+// ==========================================
+// 6. УПРАВЛЕНИЕ УСЛУГАМИ (СОЗДАНИЕ / РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ)
+// ==========================================
+function populateServiceCategorySelect(selectedCategoryId = null) {
+  const select = document.getElementById('serviceEditCategory');
+  if (!select) return;
+
+  const categories = window.noirData.getCategories();
+  select.innerHTML = categories.map(cat => `
+    <option value="${cat.id}" ${cat.id === selectedCategoryId ? 'selected' : ''}>
+      ${cat.name}
+    </option>
+  `).join('');
+}
+
+window.addServiceIncludeItem = function(text = '') {
+  const container = document.getElementById('serviceEditIncludesList');
+  if (!container) return;
+
+  const row = document.createElement('div');
+  row.className = 'service-include-row';
+  row.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'form-input service-include-input';
+  input.value = text;
+  input.placeholder = 'Пункт протокола (например: Мытьё головы премиальным шампунем)';
+  input.style.cssText = 'flex-grow: 1; padding: 7px 12px; font-size: 13px;';
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.innerHTML = '✕';
+  delBtn.title = 'Удалить пункт';
+  delBtn.style.cssText = 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--color-danger); border-radius: var(--radius-sm); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 13px; font-weight: 700;';
+  delBtn.onclick = function() {
+    row.remove();
+  };
+
+  row.appendChild(input);
+  row.appendChild(delBtn);
+  container.appendChild(row);
+};
+
+window.openCreateServiceModal = function(preselectedCategoryId = null) {
+  const modal = document.getElementById('adminServiceModal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('serviceModalTitle');
+  if (titleEl) titleEl.textContent = 'Новая услуга ателье NOIR';
+
+  document.getElementById('serviceEditId').value = '';
+  populateServiceCategorySelect(preselectedCategoryId);
+
+  const popEl = document.getElementById('serviceEditPopular');
+  if (popEl) popEl.checked = false;
+
+  document.getElementById('serviceEditName').value = '';
+  document.getElementById('serviceEditPrice').value = '450000';
+  document.getElementById('serviceEditDuration').value = '60';
+  document.getElementById('serviceEditShortDesc').value = '';
+  document.getElementById('serviceEditFullDesc').value = '';
+
+  const deleteBtn = document.getElementById('serviceDeleteBtn');
+  if (deleteBtn) deleteBtn.style.display = 'none';
+
+  const includesContainer = document.getElementById('serviceEditIncludesList');
+  if (includesContainer) {
+    includesContainer.innerHTML = '';
+    // Предустанавливаем 4 базовых пункта для удобства заполнения
+    window.addServiceIncludeItem('Консультация стилиста NOIR и диагностика');
+    window.addServiceIncludeItem('Мытье головы премиальным шампунем до и после процедуры');
+    window.addServiceIncludeItem('Основная авторская процедура с индивидуальной адаптацией');
+    window.addServiceIncludeItem('Финишный стайлинг и рекомендации по домашнему уходу');
+  }
+
+  modal.classList.add('active');
+};
+
+window.openEditServiceModal = function(serviceId) {
+  const modal = document.getElementById('adminServiceModal');
+  if (!modal) return;
+
+  const services = window.noirData.getServices();
+  const service = services.find(s => s.id === serviceId);
+  if (!service) return;
+
+  const titleEl = document.getElementById('serviceModalTitle');
+  if (titleEl) titleEl.textContent = `Редактирование: ${service.name}`;
+
+  document.getElementById('serviceEditId').value = service.id;
+  populateServiceCategorySelect(service.categoryId);
+
+  const popEl = document.getElementById('serviceEditPopular');
+  if (popEl) popEl.checked = !!service.popular;
+
+  document.getElementById('serviceEditName').value = service.name || '';
+  document.getElementById('serviceEditPrice').value = service.price || 0;
+  document.getElementById('serviceEditDuration').value = service.duration || 60;
+  document.getElementById('serviceEditShortDesc').value = service.shortDesc || '';
+  document.getElementById('serviceEditFullDesc').value = service.fullDesc || service.shortDesc || '';
+
+  const deleteBtn = document.getElementById('serviceDeleteBtn');
+  if (deleteBtn) deleteBtn.style.display = 'inline-block';
+
+  const includesContainer = document.getElementById('serviceEditIncludesList');
+  if (includesContainer) {
+    includesContainer.innerHTML = '';
+    if (service.includes && Array.isArray(service.includes) && service.includes.length > 0) {
+      service.includes.forEach(item => {
+        window.addServiceIncludeItem(item);
+      });
+    } else {
+      window.addServiceIncludeItem('Консультация мастера NOIR');
+      window.addServiceIncludeItem('Основная процедура с авторской адаптацией');
+      window.addServiceIncludeItem('Финишный стайлинг и рекомендации');
+    }
+  }
+
+  modal.classList.add('active');
+};
+
+window.deleteCurrentService = function() {
+  const id = document.getElementById('serviceEditId').value;
+  if (!id) return;
+
+  const service = window.noirData.getServices().find(s => s.id === id);
+  const name = service ? service.name : 'эту услугу';
+
+  if (confirm(`Вы уверены, что хотите удалить услугу «${name}» из прейскуранта?`)) {
+    window.noirData.deleteService(id);
+    const modal = document.getElementById('adminServiceModal');
+    if (modal) modal.classList.remove('active');
+    renderServicesAdmin();
+  }
+};
+
