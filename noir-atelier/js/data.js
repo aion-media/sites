@@ -745,8 +745,10 @@ class NoirDataService {
       SPECIALISTS: "noir_specialists",
       APPOINTMENTS: "noir_appointments",
       CLIENTS: "noir_clients",
-      PAYOUT_ORDERS: "noir_payout_ledger"
+      PAYOUT_ORDERS: "noir_payout_ledger",
+      SECURITY: "noir_admin_security"
     };
+
 
     this.initDatabase();
   }
@@ -774,7 +776,54 @@ class NoirDataService {
     if (!localStorage.getItem(this.STORAGE_KEYS.PAYOUT_ORDERS)) {
       localStorage.setItem(this.STORAGE_KEYS.PAYOUT_ORDERS, JSON.stringify(generateDemoPayoutOrders()));
     }
+    if (!localStorage.getItem(this.STORAGE_KEYS.SECURITY)) {
+      localStorage.setItem(this.STORAGE_KEYS.SECURITY, JSON.stringify({
+        pin: "1234",
+        ownerEmail: "owner@noir-atelier.com",
+        updatedAt: new Date().toISOString()
+      }));
+    }
   }
+
+  getSecurityInfo() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.SECURITY));
+      return stored || { pin: "1234", ownerEmail: "owner@noir-atelier.com" };
+    } catch (e) {
+      return { pin: "1234", ownerEmail: "owner@noir-atelier.com" };
+    }
+  }
+
+  verifyAdminPin(enteredPin) {
+    const sec = this.getSecurityInfo();
+    const cleanEntered = String(enteredPin).trim();
+    // Проверка текущего сохранённого PIN (по умолчанию 1234)
+    return cleanEntered === String(sec.pin).trim();
+  }
+
+  updateAdminPin(newPin, ownerEmail) {
+    const current = this.getSecurityInfo();
+    const updated = {
+      ...current,
+      pin: String(newPin).trim(),
+      ownerEmail: ownerEmail ? ownerEmail.trim() : current.ownerEmail,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(this.STORAGE_KEYS.SECURITY, JSON.stringify(updated));
+    return updated;
+  }
+
+  resetAdminPinToDefault() {
+    const current = this.getSecurityInfo();
+    const reset = {
+      ...current,
+      pin: "1234",
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(this.STORAGE_KEYS.SECURITY, JSON.stringify(reset));
+    return reset;
+  }
+
 
   getSalonInfo() {
     try {
