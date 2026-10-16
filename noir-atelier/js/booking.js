@@ -237,10 +237,49 @@ function renderStep1Services() {
   const container = document.getElementById('wizardServicesList');
   if (!container) return;
 
-  const categories = window.noirData.getCategories();
-  const services = window.noirData.getServices();
+  let categories = window.noirData.getCategories();
+  let services = window.noirData.getServices();
+  const specialists = window.noirData.getSpecialists();
+
+  let activeSpec = null;
+  if (bookingState.specialistId && bookingState.specialistId !== 'any') {
+    activeSpec = specialists.find(s => s.id === bookingState.specialistId);
+  }
 
   let html = '';
+
+  // Если выбран конкретный мастер, фильтруем категории и услуги по его профилю
+  if (activeSpec && activeSpec.categories && activeSpec.categories.length > 0) {
+    const allowedCatIds = activeSpec.categories;
+    categories = categories.filter(cat => allowedCatIds.includes(cat.id));
+    services = services.filter(s => allowedCatIds.includes(s.categoryId));
+
+    // Проверяем, подходит ли текущая выбранная услуга
+    if (bookingState.serviceId) {
+      const curSrv = services.find(s => s.id === bookingState.serviceId);
+      if (!curSrv) {
+        bookingState.serviceId = null;
+        bookingState.serviceName = "";
+        bookingState.price = 0;
+      }
+    }
+
+    html += `
+      <div style="background: rgba(229, 169, 60, 0.08); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="${activeSpec.avatar}" alt="${activeSpec.name}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-accent);">
+          <div>
+            <div style="font-size: 14px; font-weight: 800; color: #FFFFFF;">Мастер: ${activeSpec.name}</div>
+            <div style="font-size: 11px; color: var(--accent-gold);">Показаны только услуги, выполняемые данным мастером</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="clearSelectedSpecialistInBooking()" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;">
+          Показать всех мастеров
+        </button>
+      </div>
+    `;
+  }
+
   categories.forEach(cat => {
     const catServices = services.filter(s => s.categoryId === cat.id);
     if (catServices.length === 0) return;
@@ -276,8 +315,26 @@ function renderStep1Services() {
     html += `</div></div>`;
   });
 
+  if (categories.length === 0) {
+    html += `
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-dim);">
+        <p>Для выбранного мастера пока нет доступных услуг в каталоге.</p>
+        <button type="button" class="btn btn-secondary" onclick="clearSelectedSpecialistInBooking()" style="margin-top: 12px;">
+          Показать все услуги ателье
+        </button>
+      </div>
+    `;
+  }
+
   container.innerHTML = html;
 }
+
+window.clearSelectedSpecialistInBooking = function() {
+  bookingState.specialistId = 'any';
+  bookingState.specialistName = 'Любой свободный мастер';
+  renderStep1Services();
+  renderStep2Specialists();
+};
 
 window.selectWizardService = function(serviceId) {
   const services = window.noirData.getServices();
@@ -290,6 +347,7 @@ window.selectWizardService = function(serviceId) {
   bookingState.duration = srv.duration || 60;
 
   renderStep1Services();
+  renderStep2Specialists();
 };
 
 // Рендер Шага 2: Специалисты
@@ -298,8 +356,37 @@ function renderStep2Specialists() {
   if (!container) return;
 
   const specialists = window.noirData.getSpecialists();
+  const services = window.noirData.getServices();
+  const selectedSrv = services.find(s => s.id === bookingState.serviceId);
 
-  let html = `
+  // Фильтруем мастеров по выбранной услуге
+  let eligibleSpecialists = specialists;
+  if (selectedSrv && selectedSrv.categoryId) {
+    eligibleSpecialists = specialists.filter(sp => {
+      if (sp.categories && Array.isArray(sp.categories) && sp.categories.length > 0) {
+        return sp.categories.includes(selectedSrv.categoryId);
+      }
+      return true;
+    });
+  }
+
+  // Если выбранный мастер не оказывает эту услугу, сбрасываем на "Любой свободный мастер"
+  if (bookingState.specialistId !== 'any' && !eligibleSpecialists.some(sp => sp.id === bookingState.specialistId)) {
+    bookingState.specialistId = 'any';
+    bookingState.specialistName = 'Любой свободный мастер';
+  }
+
+  let html = '';
+  if (selectedSrv) {
+    html += `
+      <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <span>Выбрана услуга: <strong style="color: #FFFFFF;">${selectedSrv.name}</strong></span>
+        <span style="color: var(--accent-gold); font-weight: 600; font-size: 12px;">Доступно мастеров: ${eligibleSpecialists.length}</span>
+      </div>
+    `;
+  }
+
+  html += `
     <div class="wizard-options-grid">
       <div class="wizard-option-card ${bookingState.specialistId === 'any' ? 'selected' : ''}" onclick="selectWizardSpecialist('any', 'Любой свободный мастер')">
         <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gold-bg); border: 1px solid var(--border-accent); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; color: var(--accent-gold); font-weight: 800;">
@@ -311,7 +398,7 @@ function renderStep2Specialists() {
       </div>
   `;
 
-  specialists.forEach(sp => {
+  eligibleSpecialists.forEach(sp => {
     const isSelected = bookingState.specialistId === sp.id;
     html += `
       <div class="wizard-option-card ${isSelected ? 'selected' : ''}" onclick="selectWizardSpecialist('${sp.id}', '${sp.name}')">
