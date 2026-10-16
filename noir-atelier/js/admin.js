@@ -1653,48 +1653,50 @@ function renderClientsAdmin() {
     const lastApp = apps.length > 0 ? apps[0] : null;
 
     html += `
-      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; transition: border-color 0.2s ease; gap: 16px; flex-wrap: wrap;">
-        <!-- Левый блок: Аватар и имя -->
-        <div style="display: flex; align-items: center; gap: 16px; min-width: 260px;">
+      <div class="client-list-row">
+        <!-- 1. Имя и аватар гостя -->
+        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
           <div style="width: 44px; height: 44px; border-radius: 50%; background: ${avatarGrad}; color: ${avatarColor}; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; border: 2px solid ${avatarBorder}; flex-shrink: 0;">
             ${mono}
           </div>
-          <div>
+          <div style="min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">${client.name}</span>
+              <span style="font-size: 15px; font-weight: 800; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${client.name}</span>
               ${badgeHtml}
               ${discountBadge}
             </div>
-            <div style="font-size: 12px; color: var(--text-dim); margin-top: 3px; display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span>📞 ${client.phone || '—'}</span>
               ${client.telegram ? `<span style="color: var(--accent-gold); font-family: var(--font-mono);">${client.telegram}</span>` : ''}
             </div>
           </div>
         </div>
 
-        <!-- Центральный блок: Статистика визитов и LTV -->
-        <div style="display: flex; gap: 24px; align-items: center;">
-          <div style="text-align: center;">
-            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Визитов</div>
-            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">${client.totalVisits || 1}</div>
+        <!-- 2. Визитов -->
+        <div style="text-align: center;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Визитов</div>
+          <div style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">${client.totalVisits || 1}</div>
+        </div>
+
+        <!-- 3. Сумма (LTV) -->
+        <div style="text-align: center;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Сумма (LTV)</div>
+          <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin-top: 2px;">${window.noirData.formatMoney(client.totalSpent)}</div>
+        </div>
+
+        <!-- 4. Последний визит -->
+        <div style="min-width: 0;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Последний визит</div>
+          <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-top: 2px;">
+            ${client.lastVisit || '—'}
           </div>
-          <div style="text-align: center;">
-            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Сумма (LTV)</div>
-            <div style="font-size: 16px; font-weight: 800; color: var(--accent-gold); margin-top: 2px;">${window.noirData.formatMoney(client.totalSpent)}</div>
-          </div>
-          <div style="min-width: 160px;">
-            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Последний визит</div>
-            <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-top: 2px;">
-              ${client.lastVisit || '—'}
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              ${lastApp ? lastApp.serviceName : (client.favoriteSpecialistName ? 'Мастер: ' + client.favoriteSpecialistName : 'Визит в ателье')}
-            </div>
+          <div style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${lastApp ? lastApp.serviceName : (client.favoriteSpecialistName ? 'Мастер: ' + client.favoriteSpecialistName : 'Визит в ателье')}
           </div>
         </div>
 
-        <!-- Правый блок: Действия -->
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <!-- 5. Действия -->
+        <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
           <button type="button" class="btn btn-secondary" onclick="openClientModal('${client.id}')" style="padding: 7px 14px; font-size: 12px; font-weight: 700; white-space: nowrap;">
             Карточка гостя
           </button>
@@ -2264,74 +2266,76 @@ function renderPayrollAdmin() {
 
     html += `
       <div style="background: var(--bg-card); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.45)' : 'var(--border-subtle)'}; ${isPaid ? 'box-shadow: 0 0 16px -4px rgba(16, 185, 129, 0.25);' : ''} border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s ease;">
-        <!-- Основная строка мастера -->
-        <div style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: ${isPaid ? 'rgba(16, 185, 129, 0.05)' : 'transparent'};">
-          <!-- Левая часть: фото и данные мастера -->
-          <div style="display: flex; align-items: center; gap: 14px; min-width: 240px;">
-            <img src="${sp.specialistAvatar}" alt="${sp.specialistName}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid ${isPaid ? '#10B981' : 'var(--accent-gold)'};">
-            <div>
+        <!-- Основная строка мастера с фиксированной сеткой колонок -->
+        <div class="payroll-master-row" style="background: ${isPaid ? 'rgba(16, 185, 129, 0.05)' : 'transparent'};">
+          <!-- 1. Фото и данные мастера -->
+          <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+            <img src="${sp.specialistAvatar}" alt="${sp.specialistName}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid ${isPaid ? '#10B981' : 'var(--accent-gold)'}; flex-shrink: 0;">
+            <div style="min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">${sp.specialistName}</h4>
-                <span style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.3); padding: 2px 7px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 800;">
+                <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sp.specialistName}</h4>
+                <span style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.3); padding: 2px 7px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 800; white-space: nowrap;">
                   ${sp.commissionPercent}% ставка
                 </span>
                 ${isPaid ? `
-                  <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 9px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                  <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 9px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                     <span>✓ Выплачено</span>
                     <span style="color: #6EE7B7; font-size: 10px; font-family: var(--font-mono);">(#${paidOrder.id})</span>
                   </span>
                 ` : ''}
               </div>
-              <p style="font-size: 12px; color: var(--text-dim); margin-top: 3px;">${sp.specialistRole}</p>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sp.specialistRole}</p>
             </div>
           </div>
 
-          <!-- Показатели начислений мастера -->
-          <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Услуг</div>
-              <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${sp.totalServicesCount}</div>
-            </div>
+          <!-- 2. Услуг -->
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Услуг</div>
+            <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${sp.totalServicesCount}</div>
+          </div>
 
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Касса мастера</div>
-              <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${window.noirData.formatMoney(sp.grossRevenue)}</div>
-            </div>
+          <!-- 3. Касса мастера -->
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Касса мастера</div>
+            <div style="font-size: 14px; font-weight: 700; color: #FFFFFF; margin-top: 2px;">${window.noirData.formatMoney(sp.grossRevenue)}</div>
+          </div>
 
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Доход салона</div>
-              <div style="font-size: 14px; font-weight: 700; color: #10B981; margin-top: 2px;">${window.noirData.formatMoney(sp.salonMargin)}</div>
-            </div>
+          <!-- 4. Доход салона -->
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Доход салона</div>
+            <div style="font-size: 14px; font-weight: 700; color: #10B981; margin-top: 2px;">${window.noirData.formatMoney(sp.salonMargin)}</div>
+          </div>
 
-            <div style="text-align: right; background: ${isPaid ? 'rgba(16, 185, 129, 0.08)' : 'rgba(212, 175, 55, 0.08)'}; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(212, 175, 55, 0.25)'};">
-              <div style="font-size: 11px; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; text-transform: uppercase; font-weight: 700;">
-                ${isPaid ? 'Выплачено на руки' : 'К выплате мастеру'}
-              </div>
-              <div style="font-size: 18px; font-weight: 900; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; margin-top: 1px;">
-                ${window.noirData.formatMoney(isPaid ? paidOrder.amount : sp.masterPayroll)}
-              </div>
+          <!-- 5. К выплате мастеру -->
+          <div style="text-align: right; background: ${isPaid ? 'rgba(16, 185, 129, 0.08)' : 'rgba(212, 175, 55, 0.08)'}; padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(212, 175, 55, 0.25)'};">
+            <div style="font-size: 10px; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; text-transform: uppercase; font-weight: 700; white-space: nowrap;">
+              ${isPaid ? 'Выплачено на руки' : 'К выплате мастеру'}
+            </div>
+            <div style="font-size: 16px; font-weight: 900; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; margin-top: 1px; white-space: nowrap;">
+              ${window.noirData.formatMoney(isPaid ? paidOrder.amount : sp.masterPayroll)}
             </div>
           </div>
 
-          <!-- Действия -->
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" class="btn btn-secondary" onclick="toggleMasterPayrollDetails('${sp.specialistId}')" style="padding: 7px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+          <!-- 6. Действия -->
+          <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" onclick="toggleMasterPayrollDetails('${sp.specialistId}')" style="padding: 7px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
               <span>Детализация (${sp.totalServicesCount})</span>
               <span style="font-size: 10px; transition: transform 0.2s ease; ${isExpanded ? 'transform: rotate(180deg);' : ''}">▼</span>
             </button>
 
             ${isPaid ? `
               <!-- Защищённая выплата: случайный клик не сбросит ордер, доступна печать расчётного листка -->
-              <button type="button" class="btn btn-secondary" onclick="printSpecialistPayslip('${paidOrder.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 14px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;" title="Распечатать расчётный листок (А4)">
+              <button type="button" class="btn btn-secondary" onclick="printSpecialistPayslip('${paidOrder.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 14px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap;" title="Распечатать расчётный листок (А4)">
                 <span>🖨️ Листок (Payslip)</span>
               </button>
             ` : `
-              <button type="button" class="btn btn-primary" onclick="openPayoutModal('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="padding: 7px 16px; font-size: 12px; font-weight: 800;" ${sp.masterPayroll === 0 ? 'disabled style="opacity: 0.5;"' : ''}>
+              <button type="button" class="btn btn-primary" onclick="openPayoutModal('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="padding: 7px 16px; font-size: 12px; font-weight: 800; white-space: nowrap;" ${sp.masterPayroll === 0 ? 'disabled style="opacity: 0.5;"' : ''}>
                 Выплатить
               </button>
             `}
           </div>
         </div>
+
 
         <!-- Разворачиваемая таблица услуг -->
         ${isExpanded ? `
