@@ -222,8 +222,13 @@
                 След. неделя →
               </button>
             </div>
-            <div id="scheduleCurrentWeekLabel" style="font-weight: 700; color: #FFFFFF; font-size: 14px;">
-              Неделя
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div id="scheduleCurrentWeekLabel" style="font-weight: 700; color: #FFFFFF; font-size: 14px;">
+                Неделя
+              </div>
+              <button type="button" class="btn btn-primary" id="openAddSpecialistBtn" onclick="openCreateSpecialistModal()" style="padding: 7px 14px; font-size: 12px; font-weight: 700;">
+                + Добавить мастера
+              </button>
             </div>
           </div>
 
@@ -238,6 +243,12 @@
                 <!-- Rendered dynamically via admin.js -->
               </tbody>
             </table>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-primary" onclick="openCreateSpecialistModal()" style="padding: 8px 18px; font-size: 13px;">
+              + Добавить нового мастера
+            </button>
           </div>
         </div>
 
@@ -436,6 +447,86 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
           <button type="submit" class="btn btn-primary">Создать запись</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ ПРОФИЛЯ МАСТЕРА -->
+  <div class="modal-overlay" id="adminSpecialistModal">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <h3 id="specialistModalTitle">Профиль мастера</h3>
+          <p>Направления работы, специализация и график</p>
+        </div>
+        <button type="button" class="modal-close-btn modal-close-trigger">✕</button>
+      </div>
+
+      <form id="adminSpecialistForm">
+        <input type="hidden" id="specEditId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Имя мастера *</label>
+            <input type="text" id="specEditName" class="form-input" required placeholder="Например: Владимир Клим">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Должность / Специализация *</label>
+            <input type="text" id="specEditRole" class="form-input" required placeholder="Например: Ведущий топ-стилист, шеф-барбер">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Опыт работы / Регалии</label>
+            <textarea id="specEditExperience" class="form-textarea" rows="2" placeholder="Опыт более 8 лет, сложная геометрия стрижек, Fade, борода"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ссылка на фото (аватар)</label>
+            <input type="url" id="specEditAvatar" class="form-input" placeholder="https://images.unsplash.com/photo-...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span>Направления услуг мастера:</span>
+              <span style="font-size: 11px; color: var(--accent-gold); font-weight: normal;">Определяет доступные услуги для записи</span>
+            </label>
+            <div id="specCategoryCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--text-sub);">
+              <!-- Rendered dynamically via admin.js -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="margin-bottom: 8px;">Постоянные рабочие дни по умолчанию:</label>
+            <div id="specWorkDaysCheckboxes" style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="1" checked> Пн
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="2" checked> Вт
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="3" checked> Ср
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="4" checked> Чт
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="5" checked> Пт
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="6" checked> Сб
+              </label>
+              <label style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border-subtle); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="workday" value="7" checked> Вс
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
+          <button type="submit" class="btn btn-primary" id="saveSpecialistSubmitBtn">Сохранить мастера</button>
         </div>
       </form>
     </div>
