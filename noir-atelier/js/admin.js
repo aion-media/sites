@@ -25,12 +25,14 @@ function setupLiveSync() {
   window.addEventListener('storage', (e) => {
     if (e.key === window.noirData.STORAGE_KEYS.APPOINTMENTS || 
         e.key === window.noirData.STORAGE_KEYS.SPECIALISTS || 
-        e.key === window.noirData.STORAGE_KEYS.SERVICES) {
+        e.key === window.noirData.STORAGE_KEYS.SERVICES ||
+        e.key === window.noirData.STORAGE_KEYS.CLIENTS) {
       updateKPIs();
       if (currentTab === 'timeline') renderTimeline();
       if (currentTab === 'specialists') renderSpecialistsSchedule();
       if (currentTab === 'appointments') renderJournal();
       if (currentTab === 'services') renderServicesAdmin();
+      if (currentTab === 'clients') renderClientsAdmin();
     }
   });
 
@@ -40,6 +42,8 @@ function setupLiveSync() {
     if (currentTab === 'timeline') renderTimeline();
     if (currentTab === 'specialists') renderSpecialistsSchedule();
     if (currentTab === 'appointments') renderJournal();
+    if (currentTab === 'services') renderServicesAdmin();
+    if (currentTab === 'clients') renderClientsAdmin();
   });
 }
 
@@ -200,6 +204,7 @@ function switchTab(tabId) {
   if (tabId === 'specialists') renderSpecialistsSchedule();
   if (tabId === 'appointments') renderJournal();
   if (tabId === 'services') renderServicesAdmin();
+  if (tabId === 'clients') renderClientsAdmin();
 }
 
 function loadDashboard() {
@@ -238,6 +243,20 @@ function loadDashboard() {
     switchTab('services');
     setTimeout(() => {
       openCreateServiceModal();
+    }, 150);
+  }
+
+  const openClient = urlParams.get('openClient');
+  const addClient = urlParams.get('addClient');
+  if (openClient) {
+    switchTab('clients');
+    setTimeout(() => {
+      openClientModal(openClient);
+    }, 150);
+  } else if (addClient === '1') {
+    switchTab('clients');
+    setTimeout(() => {
+      openCreateClientModal();
     }, 150);
   }
 }
@@ -1064,6 +1083,57 @@ function setupModals() {
       renderServicesAdmin();
     });
   }
+
+  // Поиск и фильтрация в базе клиентов
+  const clientSearch = document.getElementById('clientSearchInput');
+  if (clientSearch) {
+    clientSearch.addEventListener('input', () => {
+      renderClientsAdmin();
+    });
+  }
+
+  const clientCatFilter = document.getElementById('clientCategoryFilter');
+  if (clientCatFilter) {
+    clientCatFilter.addEventListener('change', () => {
+      renderClientsAdmin();
+    });
+  }
+
+  const clientSort = document.getElementById('clientSortSelect');
+  if (clientSort) {
+    clientSort.addEventListener('change', () => {
+      renderClientsAdmin();
+    });
+  }
+
+  // Создание нового гостя вручную
+  const clientCreateForm = document.getElementById('adminClientCreateForm');
+  if (clientCreateForm) {
+    clientCreateForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('newClientName').value.trim();
+      const phone = document.getElementById('newClientPhone').value.trim();
+      const telegram = document.getElementById('newClientTelegram').value.trim();
+      const category = document.getElementById('newClientCategory').value;
+      const notes = document.getElementById('newClientNotes').value.trim();
+
+      const newClient = window.noirData.addClient({
+        name,
+        phone,
+        telegram,
+        category,
+        notes,
+        tags: [category === 'vip' ? 'VIP' : (category === 'regular' ? 'Постоянный' : 'Новый гость')]
+      });
+
+      const modal = document.getElementById('adminClientCreateModal');
+      if (modal) modal.classList.remove('active');
+      renderClientsAdmin();
+      if (newClient) {
+        openClientModal(newClient.id);
+      }
+    });
+  }
 }
 
 window.openQuickBookingFor = function(specialistId, time) {
@@ -1295,4 +1365,371 @@ window.deleteCurrentService = function() {
     renderServicesAdmin();
   }
 };
+
+// ==========================================
+// 7. БАЗА КЛИЕНТОВ И КАРТОЧКА ГОСТЯ (CRM)
+// ==========================================
+
+function getClientMonogram(name) {
+  if (!name) return '??';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
+function renderClientsAdmin() {
+  const container = document.getElementById('adminClientsContainer');
+  const statsSub = document.getElementById('clientsStatsSub');
+  if (!container) return;
+
+  const clients = window.noirData.getClients();
+  const searchInput = document.getElementById('clientSearchInput');
+  const categoryFilter = document.getElementById('clientCategoryFilter');
+  const sortSelect = document.getElementById('clientSortSelect');
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const cat = categoryFilter ? categoryFilter.value : 'all';
+  const sortBy = sortSelect ? sortSelect.value : 'spent_desc';
+
+  // Статистика
+  const totalCount = clients.length;
+  const vipCount = clients.filter(c => c.category === 'vip').length;
+  const regularCount = clients.filter(c => c.category === 'regular').length;
+  const newCount = clients.filter(c => c.category === 'new').length;
+
+  if (statsSub) {
+    statsSub.innerHTML = `Всего гостей в базе: <strong style="color: #FFFFFF;">${totalCount}</strong> • VIP: <strong style="color: var(--accent-gold);">${vipCount}</strong> • Постоянных: <strong style="color: var(--color-success);">${regularCount}</strong> • Новых: <strong style="color: var(--color-warning);">${newCount}</strong>`;
+  }
+
+  // Фильтрация
+  let filtered = clients.filter(c => {
+    if (cat !== 'all' && c.category !== cat) return false;
+    if (query) {
+      const matchName = (c.name || '').toLowerCase().includes(query);
+      const matchPhone = (c.phone || '').toLowerCase().includes(query);
+      const matchTele = (c.telegram || '').toLowerCase().includes(query);
+      return matchName || matchPhone || matchTele;
+    }
+    return true;
+  });
+
+  // Сортировка
+  filtered.sort((a, b) => {
+    if (sortBy === 'spent_desc') return (b.totalSpent || 0) - (a.totalSpent || 0);
+    if (sortBy === 'visits_desc') return (b.totalVisits || 0) - (a.totalVisits || 0);
+    if (sortBy === 'recent') return (b.lastVisit || '').localeCompare(a.lastVisit || '');
+    if (sortBy === 'name_asc') return (a.name || '').localeCompare(b.name || '');
+    return 0;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 40px; text-align: center; color: var(--text-dim); background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
+        Гости по заданным критериям не найдены
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(client => {
+    const mono = getClientMonogram(client.name);
+    let badgeHtml = '<span style="background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border-subtle); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700;">Новый</span>';
+    let avatarBorder = 'var(--border-subtle)';
+    let avatarGrad = 'linear-gradient(135deg, #1C2333, #0E1118)';
+    let avatarColor = '#FFFFFF';
+
+    if (client.category === 'vip') {
+      badgeHtml = '<span style="background: rgba(201, 162, 77, 0.15); color: var(--accent-gold); border: 1px solid rgba(201, 162, 77, 0.35); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase;">⭐ VIP</span>';
+      avatarBorder = 'var(--accent-gold)';
+      avatarGrad = 'linear-gradient(135deg, var(--accent-gold), #8B6B23)';
+      avatarColor = '#0E1118';
+    } else if (client.category === 'regular') {
+      badgeHtml = '<span style="background: rgba(16, 185, 129, 0.15); color: var(--color-success); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700;">💎 Постоянный</span>';
+      avatarBorder = 'rgba(16, 185, 129, 0.4)';
+    }
+
+    const apps = window.noirData.getClientAppointments(client.id);
+    const lastApp = apps.length > 0 ? apps[0] : null;
+
+    html += `
+      <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; transition: border-color 0.2s ease; gap: 16px; flex-wrap: wrap;">
+        <!-- Левый блок: Аватар и имя -->
+        <div style="display: flex; align-items: center; gap: 16px; min-width: 260px;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: ${avatarGrad}; color: ${avatarColor}; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; border: 2px solid ${avatarBorder}; flex-shrink: 0;">
+            ${mono}
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">${client.name}</span>
+              ${badgeHtml}
+            </div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 3px; display: flex; align-items: center; gap: 8px;">
+              <span>📞 ${client.phone || '—'}</span>
+              ${client.telegram ? `<span style="color: var(--accent-gold); font-family: var(--font-mono);">${client.telegram}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Центральный блок: Статистика визитов и LTV -->
+        <div style="display: flex; gap: 24px; align-items: center;">
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Визитов</div>
+            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">${client.totalVisits || 1}</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Сумма (LTV)</div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--accent-gold); margin-top: 2px;">${window.noirData.formatMoney(client.totalSpent)}</div>
+          </div>
+          <div style="min-width: 160px;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Последний визит</div>
+            <div style="font-size: 12px; color: #FFFFFF; font-weight: 600; margin-top: 2px;">
+              ${client.lastVisit || '—'}
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${lastApp ? lastApp.serviceName : (client.favoriteSpecialistName ? 'Мастер: ' + client.favoriteSpecialistName : 'Визит в ателье')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Правый блок: Действия -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="btn btn-secondary" onclick="openClientModal('${client.id}')" style="padding: 7px 14px; font-size: 12px; font-weight: 700; white-space: nowrap;">
+            Карточка гостя
+          </button>
+          <button type="button" class="btn btn-primary" onclick="quickBookForClient('${client.id}')" style="padding: 7px 14px; font-size: 12px; font-weight: 700; white-space: nowrap;">
+            + Записать
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+window.openClientModal = function(clientId) {
+  const modal = document.getElementById('adminClientModal');
+  if (!modal) return;
+
+  const client = window.noirData.getClientById(clientId);
+  if (!client) return;
+
+  document.getElementById('clientModalId').value = client.id;
+  document.getElementById('clientModalName').textContent = client.name;
+
+  const mono = getClientMonogram(client.name);
+  const avatarEl = document.getElementById('clientModalAvatar');
+  const badgeEl = document.getElementById('clientModalBadge');
+
+  if (avatarEl) {
+    avatarEl.textContent = mono;
+    if (client.category === 'vip') {
+      avatarEl.style.background = 'linear-gradient(135deg, var(--accent-gold), #8B6B23)';
+      avatarEl.style.color = '#0E1118';
+      avatarEl.style.borderColor = 'var(--accent-gold)';
+    } else {
+      avatarEl.style.background = 'linear-gradient(135deg, #1C2333, #0E1118)';
+      avatarEl.style.color = '#FFFFFF';
+      avatarEl.style.borderColor = 'var(--border-subtle)';
+    }
+  }
+
+  if (badgeEl) {
+    if (client.category === 'vip') {
+      badgeEl.textContent = '⭐ VIP ГОСТЬ';
+      badgeEl.style.background = 'rgba(201, 162, 77, 0.15)';
+      badgeEl.style.color = 'var(--accent-gold)';
+      badgeEl.style.border = '1px solid rgba(201, 162, 77, 0.35)';
+    } else if (client.category === 'regular') {
+      badgeEl.textContent = '💎 ПОСТОЯННЫЙ ГОСТЬ';
+      badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
+      badgeEl.style.color = 'var(--color-success)';
+      badgeEl.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+    } else {
+      badgeEl.textContent = '✨ НОВЫЙ ГОСТЬ';
+      badgeEl.style.background = 'rgba(255, 255, 255, 0.06)';
+      badgeEl.style.color = 'var(--text-dim)';
+      badgeEl.style.border = '1px solid var(--border-subtle)';
+    }
+  }
+
+  const subEl = document.getElementById('clientModalSubtitle');
+  if (subEl) {
+    subEl.textContent = `${client.phone || 'Телефон не указан'} • Клиент с ${client.firstVisit || '2026'}`;
+  }
+
+  // KPI
+  const visits = client.totalVisits || 1;
+  const spent = client.totalSpent || 0;
+  const avg = visits > 0 ? Math.round(spent / visits) : 0;
+
+  document.getElementById('clientModalTotalVisits').textContent = visits;
+  document.getElementById('clientModalTotalSpent').textContent = window.noirData.formatMoney(spent);
+  document.getElementById('clientModalAvgCheck').textContent = window.noirData.formatMoney(avg);
+  document.getElementById('clientModalFavSpecialist').textContent = client.favoriteSpecialistName || 'Любой свободный мастер';
+
+  // Поля ввода
+  document.getElementById('clientModalHairNotes').value = client.hairNotes || '';
+  document.getElementById('clientModalNotes').value = client.notes || '';
+  document.getElementById('clientModalPhoneInput').value = client.phone || '';
+  document.getElementById('clientModalTelegramInput').value = client.telegram || '';
+  document.getElementById('clientModalCategorySelect').value = client.category || 'new';
+
+  // История визитов
+  const historyList = document.getElementById('clientModalVisitsHistoryList');
+  const countEl = document.getElementById('clientModalHistoryCount');
+  const appointments = window.noirData.getClientAppointments(client.id);
+
+  appointments.sort((a, b) => {
+    return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time);
+  });
+
+  if (countEl) {
+    countEl.textContent = `${appointments.length} ${appointments.length === 1 ? 'визит' : (appointments.length < 5 ? 'визита' : 'визитов')}`;
+  }
+
+  if (historyList) {
+    if (appointments.length === 0) {
+      historyList.innerHTML = `
+        <div style="padding: 24px; text-align: center; color: var(--text-dim); background: var(--bg-surface); border-radius: var(--radius-sm); border: 1px dashed var(--border-subtle); font-size: 13px;">
+          Записей визитов пока нет. Нажмите «+ Записать гостя» ниже.
+        </div>
+      `;
+    } else {
+      let historyHtml = '';
+      appointments.forEach(app => {
+        let statusBadge = '<span style="font-size: 10px; padding: 2px 6px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3);">Новая</span>';
+        if (app.status === 'confirmed') {
+          statusBadge = '<span style="font-size: 10px; padding: 2px 6px; border-radius: 8px; background: rgba(201, 162, 77, 0.15); color: var(--accent-gold); border: 1px solid rgba(201, 162, 77, 0.3);">Подтверждена</span>';
+        } else if (app.status === 'completed') {
+          statusBadge = '<span style="font-size: 10px; padding: 2px 6px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: var(--color-success); border: 1px solid rgba(16, 185, 129, 0.3);">Выполнена</span>';
+        } else if (app.status === 'cancelled') {
+          statusBadge = '<span style="font-size: 10px; padding: 2px 6px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Отменена</span>';
+        }
+
+        historyHtml += `
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 13px; font-weight: 700; color: #FFFFFF;">
+                📅 ${app.date} в ${app.time}
+              </span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                ${statusBadge}
+                <span style="font-size: 13px; font-weight: 800; color: var(--accent-gold);">${window.noirData.formatMoney(app.price)}</span>
+              </div>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; color: #FFFFFF;">
+              ✂️ ${app.serviceName}
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim); margin-top: 3px; display: flex; justify-content: space-between;">
+              <span>Мастер: <strong style="color: var(--text-sub);">${app.specialistName}</strong></span>
+              <span>Длительность: ${app.duration || 60} мин</span>
+            </div>
+            ${app.comment ? `
+              <div style="margin-top: 6px; font-size: 11px; color: var(--text-muted); background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 4px; border-left: 2px solid var(--accent-gold);">
+                💬 ${app.comment}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      historyList.innerHTML = historyHtml;
+    }
+  }
+
+  modal.classList.add('active');
+};
+
+window.saveCurrentClientProfile = function() {
+  const clientId = document.getElementById('clientModalId').value;
+  if (!clientId) return;
+
+  const hairNotes = document.getElementById('clientModalHairNotes').value.trim();
+  const notes = document.getElementById('clientModalNotes').value.trim();
+  const phone = document.getElementById('clientModalPhoneInput').value.trim();
+  const telegram = document.getElementById('clientModalTelegramInput').value.trim();
+  const category = document.getElementById('clientModalCategorySelect').value;
+
+  window.noirData.updateClient(clientId, {
+    hairNotes,
+    notes,
+    phone,
+    telegram,
+    category
+  });
+
+  renderClientsAdmin();
+
+  // Обновляем визуальный бейдж
+  const badgeEl = document.getElementById('clientModalBadge');
+  if (badgeEl) {
+    if (category === 'vip') {
+      badgeEl.textContent = '⭐ VIP ГОСТЬ';
+      badgeEl.style.background = 'rgba(201, 162, 77, 0.15)';
+      badgeEl.style.color = 'var(--accent-gold)';
+    } else if (category === 'regular') {
+      badgeEl.textContent = '💎 ПОСТОЯННЫЙ ГОСТЬ';
+      badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
+      badgeEl.style.color = 'var(--color-success)';
+    } else {
+      badgeEl.textContent = '✨ НОВЫЙ ГОСТЬ';
+      badgeEl.style.background = 'rgba(255, 255, 255, 0.06)';
+      badgeEl.style.color = 'var(--text-dim)';
+    }
+  }
+
+  // Обратная связь на кнопке
+  const saveBtn = window.event ? window.event.target : null;
+  if (saveBtn) {
+    const origText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '✓ Сохранено!';
+    saveBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+    saveBtn.style.color = 'var(--color-success)';
+    setTimeout(() => {
+      saveBtn.innerHTML = origText;
+      saveBtn.style.background = '';
+      saveBtn.style.color = '';
+    }, 1200);
+  }
+};
+
+window.quickBookForClient = function(clientId) {
+  const client = window.noirData.getClientById(clientId);
+  if (!client) return;
+
+  const modal = document.getElementById('adminClientModal');
+  if (modal) modal.classList.remove('active');
+
+  openQuickBookingFor(client.favoriteSpecialistId || 'any', '14:00');
+
+  // Предзаполняем поля клиента
+  const nameInput = document.getElementById('adminClientName');
+  const phoneInput = document.getElementById('adminClientPhone');
+  if (nameInput) nameInput.value = client.name;
+  if (phoneInput) phoneInput.value = client.phone;
+};
+
+window.bookAppointmentForCurrentClient = function() {
+  const clientId = document.getElementById('clientModalId').value;
+  if (clientId) {
+    quickBookForClient(clientId);
+  }
+};
+
+window.openCreateClientModal = function() {
+  const modal = document.getElementById('adminClientCreateModal');
+  if (!modal) return;
+
+  document.getElementById('newClientName').value = '';
+  document.getElementById('newClientPhone').value = '';
+  document.getElementById('newClientTelegram').value = '';
+  document.getElementById('newClientCategory').value = 'new';
+  document.getElementById('newClientNotes').value = '';
+
+  modal.classList.add('active');
+};
+
 
