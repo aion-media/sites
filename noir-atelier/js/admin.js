@@ -947,6 +947,11 @@ function setupModals() {
       const srv = window.noirData.getServices().find(s => s.id === srvId);
       const sp = window.noirData.getSpecialists().find(s => s.id === specId);
 
+      const client = window.noirData.findClientByContact(phone) || window.noirData.getClientByPhone(phone);
+      const discount = (client && client.discountPercent) ? client.discountPercent : 0;
+      const basePrice = srv ? srv.price : 0;
+      const finalPrice = discount > 0 ? Math.round(basePrice * (100 - discount) / 100) : basePrice;
+
       window.noirData.addAppointment({
         clientName,
         phone,
@@ -957,13 +962,72 @@ function setupModals() {
         date,
         time,
         duration: srv ? srv.duration : 60,
-        price: srv ? srv.price : 0
+        price: finalPrice,
+        discountPercent: discount,
+        comment: discount > 0 ? `Применена скидка гостя ${discount}% (базовая цена ${window.noirData.formatMoney(basePrice)})` : ""
       });
 
       document.getElementById('adminQuickBookingModal').classList.remove('active');
       updateKPIs();
       renderTimeline();
     });
+  }
+
+  // Динамическое отображение скидки в быстрой записи
+  function updateQuickBookingDiscountDisplay() {
+    const quickDiscountBox = document.getElementById('quickBookingDiscountInfo');
+    if (!quickDiscountBox) return;
+    const phoneInp = document.getElementById('adminClientPhone');
+    const phone = phoneInp ? phoneInp.value.trim() : '';
+    const client = window.noirData.findClientByContact(phone) || window.noirData.getClientByPhone(phone);
+    const serviceSel = document.getElementById('adminServiceSelect');
+    const srvId = serviceSel ? serviceSel.value : '';
+    const srv = window.noirData.getServices().find(s => s.id === srvId);
+    const basePrice = srv ? srv.price : 0;
+
+    if (client && client.discountPercent > 0) {
+      const discount = client.discountPercent;
+      const saved = Math.round(basePrice * discount / 100);
+      const finalP = basePrice - saved;
+      quickDiscountBox.style.display = 'block';
+      quickDiscountBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <div>
+            <span>⭐ Персональная скидка гостя (${client.name}): <strong>${discount}%</strong></span>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Экономия: -${window.noirData.formatMoney(saved)}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: 800; font-size: 14px; color: var(--accent-gold);">${window.noirData.formatMoney(finalP)}</div>
+            <div style="text-decoration: line-through; opacity: 0.6; font-size: 11px;">${window.noirData.formatMoney(basePrice)}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      quickDiscountBox.style.display = 'none';
+      quickDiscountBox.innerHTML = '';
+    }
+  }
+  window.updateQuickBookingDiscountDisplay = updateQuickBookingDiscountDisplay;
+
+  const adminClientPhoneInp = document.getElementById('adminClientPhone');
+  const adminServiceSel = document.getElementById('adminServiceSelect');
+
+  if (adminClientPhoneInp) {
+    adminClientPhoneInp.addEventListener('input', () => {
+      const phone = adminClientPhoneInp.value.trim();
+      const client = window.noirData.findClientByContact(phone);
+      if (client) {
+        const nameInp = document.getElementById('adminClientName');
+        if (nameInp && (!nameInp.value || nameInp.value === 'Гость')) {
+          nameInp.value = client.name;
+        }
+      }
+      updateQuickBookingDiscountDisplay();
+    });
+  }
+
+  if (adminServiceSel) {
+    adminServiceSel.addEventListener('change', updateQuickBookingDiscountDisplay);
   }
 
   // Поиск в журнале
@@ -1115,6 +1179,7 @@ function setupModals() {
       const phone = document.getElementById('newClientPhone').value.trim();
       const telegram = document.getElementById('newClientTelegram').value.trim();
       const category = document.getElementById('newClientCategory').value;
+      const discountPercent = parseInt(document.getElementById('newClientDiscount').value, 10) || 0;
       const notes = document.getElementById('newClientNotes').value.trim();
 
       const newClient = window.noirData.addClient({
@@ -1122,6 +1187,7 @@ function setupModals() {
         phone,
         telegram,
         category,
+        discountPercent,
         notes,
         tags: [category === 'vip' ? 'VIP' : (category === 'regular' ? 'Постоянный' : 'Новый гость')]
       });
@@ -1162,6 +1228,7 @@ window.openQuickBookingFor = function(specialistId, time) {
     `).join('');
   }
 
+  updateQuickBookingDiscountDisplay();
   quickModal.classList.add('active');
 };
 
@@ -1451,6 +1518,10 @@ function renderClientsAdmin() {
       avatarBorder = 'rgba(16, 185, 129, 0.4)';
     }
 
+    const discountBadge = (client.discountPercent && client.discountPercent > 0)
+      ? `<span style="background: rgba(201, 162, 77, 0.15); color: var(--accent-gold); border: 1px solid rgba(201, 162, 77, 0.35); padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 800;">-${client.discountPercent}%</span>`
+      : '';
+
     const apps = window.noirData.getClientAppointments(client.id);
     const lastApp = apps.length > 0 ? apps[0] : null;
 
@@ -1462,9 +1533,10 @@ function renderClientsAdmin() {
             ${mono}
           </div>
           <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">${client.name}</span>
               ${badgeHtml}
+              ${discountBadge}
             </div>
             <div style="font-size: 12px; color: var(--text-dim); margin-top: 3px; display: flex; align-items: center; gap: 8px;">
               <span>📞 ${client.phone || '—'}</span>
@@ -1510,6 +1582,14 @@ function renderClientsAdmin() {
   container.innerHTML = html;
 }
 
+window.setClientModalDiscount = function(val) {
+  const input = document.getElementById('clientModalDiscountInput');
+  const badge = document.getElementById('clientModalDiscountBadge');
+  const cleanVal = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+  if (input) input.value = cleanVal;
+  if (badge) badge.textContent = cleanVal + '%';
+};
+
 window.openClientModal = function(clientId) {
   const modal = document.getElementById('adminClientModal');
   if (!modal) return;
@@ -1519,6 +1599,17 @@ window.openClientModal = function(clientId) {
 
   document.getElementById('clientModalId').value = client.id;
   document.getElementById('clientModalName').textContent = client.name;
+  if (document.getElementById('clientModalNameInput')) {
+    document.getElementById('clientModalNameInput').value = client.name;
+  }
+
+  const discount = (client.discountPercent !== undefined && client.discountPercent !== null) ? client.discountPercent : 0;
+  if (document.getElementById('clientModalDiscountInput')) {
+    document.getElementById('clientModalDiscountInput').value = discount;
+  }
+  if (document.getElementById('clientModalDiscountBadge')) {
+    document.getElementById('clientModalDiscountBadge').textContent = discount + '%';
+  }
 
   const mono = getClientMonogram(client.name);
   const avatarEl = document.getElementById('clientModalAvatar');
@@ -1538,22 +1629,28 @@ window.openClientModal = function(clientId) {
   }
 
   if (badgeEl) {
+    let badgeText = '';
     if (client.category === 'vip') {
-      badgeEl.textContent = '⭐ VIP ГОСТЬ';
+      badgeText = '⭐ VIP ГОСТЬ';
       badgeEl.style.background = 'rgba(201, 162, 77, 0.15)';
       badgeEl.style.color = 'var(--accent-gold)';
       badgeEl.style.border = '1px solid rgba(201, 162, 77, 0.35)';
     } else if (client.category === 'regular') {
-      badgeEl.textContent = '💎 ПОСТОЯННЫЙ ГОСТЬ';
+      badgeText = '💎 ПОСТОЯННЫЙ ГОСТЬ';
       badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
       badgeEl.style.color = 'var(--color-success)';
       badgeEl.style.border = '1px solid rgba(16, 185, 129, 0.35)';
     } else {
-      badgeEl.textContent = '✨ НОВЫЙ ГОСТЬ';
+      badgeText = '✨ НОВЫЙ ГОСТЬ';
       badgeEl.style.background = 'rgba(255, 255, 255, 0.06)';
       badgeEl.style.color = 'var(--text-dim)';
       badgeEl.style.border = '1px solid var(--border-subtle)';
     }
+
+    if (discount > 0) {
+      badgeText += ` • СКИДКА ${discount}%`;
+    }
+    badgeEl.textContent = badgeText;
   }
 
   const subEl = document.getElementById('clientModalSubtitle');
@@ -1647,39 +1744,65 @@ window.saveCurrentClientProfile = function() {
   const clientId = document.getElementById('clientModalId').value;
   if (!clientId) return;
 
+  const nameInput = document.getElementById('clientModalNameInput');
+  const name = nameInput ? nameInput.value.trim() : '';
+
+  const discountInput = document.getElementById('clientModalDiscountInput');
+  const discountPercent = discountInput ? Math.max(0, Math.min(100, parseInt(discountInput.value, 10) || 0)) : 0;
+
   const hairNotes = document.getElementById('clientModalHairNotes').value.trim();
   const notes = document.getElementById('clientModalNotes').value.trim();
   const phone = document.getElementById('clientModalPhoneInput').value.trim();
   const telegram = document.getElementById('clientModalTelegramInput').value.trim();
   const category = document.getElementById('clientModalCategorySelect').value;
 
-  window.noirData.updateClient(clientId, {
+  const updatePayload = {
     hairNotes,
     notes,
     phone,
     telegram,
-    category
-  });
+    category,
+    discountPercent
+  };
 
-  renderClientsAdmin();
+  if (name) {
+    updatePayload.name = name;
+  }
+
+  window.noirData.updateClient(clientId, updatePayload);
+
+  // Обновляем заголовок модалки и монограмму
+  if (name) {
+    document.getElementById('clientModalName').textContent = name;
+    const avatarEl = document.getElementById('clientModalAvatar');
+    if (avatarEl) avatarEl.textContent = getClientMonogram(name);
+  }
 
   // Обновляем визуальный бейдж
   const badgeEl = document.getElementById('clientModalBadge');
   if (badgeEl) {
+    let badgeText = '';
     if (category === 'vip') {
-      badgeEl.textContent = '⭐ VIP ГОСТЬ';
+      badgeText = '⭐ VIP ГОСТЬ';
       badgeEl.style.background = 'rgba(201, 162, 77, 0.15)';
       badgeEl.style.color = 'var(--accent-gold)';
     } else if (category === 'regular') {
-      badgeEl.textContent = '💎 ПОСТОЯННЫЙ ГОСТЬ';
+      badgeText = '💎 ПОСТОЯННЫЙ ГОСТЬ';
       badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
       badgeEl.style.color = 'var(--color-success)';
     } else {
-      badgeEl.textContent = '✨ НОВЫЙ ГОСТЬ';
+      badgeText = '✨ НОВЫЙ ГОСТЬ';
       badgeEl.style.background = 'rgba(255, 255, 255, 0.06)';
       badgeEl.style.color = 'var(--text-dim)';
     }
+
+    if (discountPercent > 0) {
+      badgeText += ` • СКИДКА ${discountPercent}%`;
+    }
+    badgeEl.textContent = badgeText;
   }
+
+  renderClientsAdmin();
 
   // Обратная связь на кнопке
   const saveBtn = window.event ? window.event.target : null;
@@ -1709,7 +1832,11 @@ window.quickBookForClient = function(clientId) {
   const nameInput = document.getElementById('adminClientName');
   const phoneInput = document.getElementById('adminClientPhone');
   if (nameInput) nameInput.value = client.name;
-  if (phoneInput) phoneInput.value = client.phone;
+  if (phoneInput) {
+    phoneInput.value = client.phone;
+  }
+
+  updateQuickBookingDiscountDisplay();
 };
 
 window.bookAppointmentForCurrentClient = function() {
@@ -1727,6 +1854,8 @@ window.openCreateClientModal = function() {
   document.getElementById('newClientPhone').value = '';
   document.getElementById('newClientTelegram').value = '';
   document.getElementById('newClientCategory').value = 'new';
+  const discInp = document.getElementById('newClientDiscount');
+  if (discInp) discInp.value = '0';
   document.getElementById('newClientNotes').value = '';
 
   modal.classList.add('active');
