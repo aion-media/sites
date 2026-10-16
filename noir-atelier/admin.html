@@ -48,6 +48,42 @@
       color: #EF4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
+    .status-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .status-select option {
+      background: #12151E;
+      color: #FFFFFF;
+    }
+    .status-select.badge-status-new {
+      background: rgba(245, 158, 11, 0.15);
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .status-select.badge-status-confirmed {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60A5FA;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    .status-select.badge-status-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-select.badge-status-cancelled {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
   </style>
 </head>
 <body class="admin-body">
@@ -133,30 +169,34 @@
 
       <!-- Content Views -->
       <div class="admin-content">
-        <!-- Top KPIs -->
+        <!-- Top KPIs (4 Blocks) -->
         <div class="kpi-grid">
+          <!-- 1. Новые заявки -->
+          <div class="kpi-card">
+            <span class="kpi-title">Новые заявки</span>
+            <span class="kpi-value" id="kpiNewRequestsCount" style="color: var(--color-warning);">0</span>
+            <span class="kpi-sub">Требуют подтверждения</span>
+          </div>
+
+          <!-- 2. Записей на сегодня -->
           <div class="kpi-card">
             <span class="kpi-title">Записей на сегодня</span>
             <span class="kpi-value" id="kpiTodayCount">0</span>
-            <span class="kpi-sub">В расписании мастеров</span>
+            <span class="kpi-sub">Подтверждённые визиты</span>
           </div>
 
+          <!-- 3. Выручка сегодня -->
           <div class="kpi-card">
             <span class="kpi-title">Выручка сегодня</span>
-            <span class="kpi-value" id="kpiTodayRevenue">0 ₫</span>
+            <span class="kpi-value" id="kpiTodayRevenue" style="color: var(--accent-gold);">0 ₫</span>
             <span class="kpi-sub">Сумма подтверждённых броней</span>
           </div>
 
+          <!-- 4. В кассе (Оплачено) -->
           <div class="kpi-card">
-            <span class="kpi-title">Загрузка мастеров</span>
-            <span class="kpi-value" id="kpiOccupancy">0%</span>
-            <span class="kpi-sub">От доступных тайм-слотов</span>
-          </div>
-
-          <div class="kpi-card">
-            <span class="kpi-title">Новых заявок</span>
-            <span class="kpi-value" id="kpiNewRequestsCount">0</span>
-            <span class="kpi-sub">Требуют подтверждения</span>
+            <span class="kpi-title">В кассе (Оплачено)</span>
+            <span class="kpi-value" id="kpiCashRevenue" style="color: var(--color-success);">0 ₫</span>
+            <span class="kpi-sub">Выполненные визиты</span>
           </div>
         </div>
 
