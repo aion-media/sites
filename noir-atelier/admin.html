@@ -139,6 +139,10 @@
           <span>🏷️</span>
           <span>Прейскурант и услуги</span>
         </div>
+        <div class="admin-nav-item" data-tab="clients">
+          <span>👤</span>
+          <span>База клиентов</span>
+        </div>
       </nav>
 
       <div style="padding: 20px; border-top: 1px solid var(--border-subtle); margin-top: auto;">
@@ -341,6 +345,47 @@
             </button>
           </div>
           <div id="adminServicesContainer">
+            <!-- Rendered dynamically via admin.js -->
+          </div>
+        </div>
+
+        <!-- TAB 5: БАЗА КЛИЕНТОВ -->
+        <div class="admin-tab-pane" id="tabPane_clients" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 20px;">
+            <div>
+              <h3 style="font-size: 15px; font-weight: 800; color: #FFFFFF;">База клиентов NOIR Hair Atelier</h3>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 2px;" id="clientsStatsSub">Карточки гостей, история процедур, статистика визитов и заметки мастеров</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openCreateClientModal()" style="padding: 8px 16px; font-size: 13px; font-weight: 700;">
+              + Новый гость
+            </button>
+          </div>
+
+          <!-- Поиск и фильтры клиентов -->
+          <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="flex-grow: 1; min-width: 240px;">
+              <input type="text" id="clientSearchInput" class="form-input" placeholder="🔍 Поиск по имени или номеру телефона..." style="padding: 10px 16px; font-size: 13px;">
+            </div>
+            <div style="width: 210px;">
+              <select id="clientCategoryFilter" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                <option value="all">Все категории гостей</option>
+                <option value="vip">⭐ VIP гости</option>
+                <option value="regular">💎 Постоянные гости</option>
+                <option value="new">✨ Новые гости</option>
+              </select>
+            </div>
+            <div style="width: 230px;">
+              <select id="clientSortSelect" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                <option value="spent_desc">Сортировка: По сумме чеков (LTV)</option>
+                <option value="visits_desc">Сортировка: По числу визитов</option>
+                <option value="recent">Сортировка: По дате визита</option>
+                <option value="name_asc">Сортировка: По имени (А–Я)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Список клиентов -->
+          <div id="adminClientsContainer" style="display: flex; flex-direction: column; gap: 12px;">
             <!-- Rendered dynamically via admin.js -->
           </div>
         </div>
@@ -669,6 +714,167 @@
             <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
             <button type="submit" class="btn btn-primary" id="saveServiceSubmitBtn">Сохранить услугу</button>
           </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: КАРТОЧКА ГОСТЯ -->
+  <div class="modal-overlay" id="adminClientModal">
+    <div class="modal-card" style="max-width: 880px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div id="clientModalAvatar" style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-gold), #8B6B23); color: #0E1118; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent-gold); flex-shrink: 0;">
+            АВ
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h3 id="clientModalName" style="font-size: 18px; font-weight: 800; color: #FFFFFF; margin: 0;">Имя гостя</h3>
+              <span id="clientModalBadge" style="font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 800; text-transform: uppercase;">VIP</span>
+            </div>
+            <p id="clientModalSubtitle" style="font-size: 12px; color: var(--text-dim); margin-top: 3px;">+7 (999) 000-00-00 &bull; Клиент с 15 июня 2026</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn modal-close-trigger">✕</button>
+      </div>
+
+      <div class="modal-body" style="max-height: calc(88vh - 150px); overflow-y: auto; padding: 20px 28px;">
+        <input type="hidden" id="clientModalId">
+
+        <!-- 4 KPI Блока гостя -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Всего визитов</div>
+            <div id="clientModalTotalVisits" style="font-size: 20px; font-weight: 800; color: #FFFFFF; margin-top: 4px;">0</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Сумма покупок (LTV)</div>
+            <div id="clientModalTotalSpent" style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin-top: 4px;">0 ₫</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Средний чек</div>
+            <div id="clientModalAvgCheck" style="font-size: 18px; font-weight: 800; color: var(--color-success); margin-top: 4px;">0 ₫</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700;">Любимый мастер</div>
+            <div id="clientModalFavSpecialist" style="font-size: 13px; font-weight: 700; color: #FFFFFF; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+          </div>
+        </div>
+
+        <!-- Двухколоночный блок: Заметки и История -->
+        <div style="display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px;">
+          <!-- Левая колонка: Профиль и Заметки мастера -->
+          <div>
+            <h4 style="font-size: 14px; font-weight: 800; color: #FFFFFF; margin-bottom: 12px;">
+              📝 Заметки мастера и предпочтения
+            </h4>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label" style="font-size: 11px;">Особенности волос, кожи и формулы:</label>
+              <textarea id="clientModalHairNotes" class="form-textarea" rows="3" placeholder="Формулы тонирования, особенности черепа, длина фейда, чувствительность кожи..."></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label class="form-label" style="font-size: 11px;">Пожелания гостя и сервис:</label>
+              <textarea id="clientModalNotes" class="form-textarea" rows="3" placeholder="Любимый кофе/чай, темы бесед, аллергии, комфортная температура..."></textarea>
+            </div>
+
+            <div style="background: var(--bg-surface); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 14px;">
+              <div style="font-size: 12px; font-weight: 700; color: #FFFFFF; margin-bottom: 10px;">Контакты и категория</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                  <label class="form-label" style="font-size: 10px;">Телефон</label>
+                  <input type="text" id="clientModalPhoneInput" class="form-input" style="padding: 6px 10px; font-size: 12px;">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 10px;">Telegram</label>
+                  <input type="text" id="clientModalTelegramInput" class="form-input" placeholder="@username" style="padding: 6px 10px; font-size: 12px;">
+                </div>
+              </div>
+              <div style="margin-top: 10px;">
+                <label class="form-label" style="font-size: 10px;">Статус лояльности</label>
+                <select id="clientModalCategorySelect" class="form-select" style="padding: 6px 10px; font-size: 12px;">
+                  <option value="new">Новый гость</option>
+                  <option value="regular">Постоянный гость</option>
+                  <option value="vip">VIP гость</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary" onclick="saveCurrentClientProfile()" style="width: 100%; font-size: 12px; padding: 8px 14px;">
+              💾 Сохранить заметки и профиль
+            </button>
+          </div>
+
+          <!-- Правая колонка: История процедур и посещений -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="font-size: 14px; font-weight: 800; color: #FFFFFF; margin: 0;">
+                Хроника визитов и процедур
+              </h4>
+              <span id="clientModalHistoryCount" style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">0 записей</span>
+            </div>
+
+            <div id="clientModalVisitsHistoryList" style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 4px;">
+              <!-- Dynamic list of visit cards rendered via admin.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary modal-close-trigger">
+          Закрыть
+        </button>
+        <button type="button" class="btn btn-primary" id="clientModalQuickBookBtn" onclick="bookAppointmentForCurrentClient()">
+          + Записать гостя на процедуру
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: СОЗДАНИЕ НОВОГО ГОСТЯ -->
+  <div class="modal-overlay" id="adminClientCreateModal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <h3>Новый гость в базе</h3>
+          <p>Ручное добавление карточки клиента</p>
+        </div>
+        <button type="button" class="modal-close-btn modal-close-trigger">✕</button>
+      </div>
+      <form id="adminClientCreateForm">
+        <div class="modal-body" style="padding: 20px 28px;">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Имя и фамилия гостя *</label>
+            <input type="text" id="newClientName" class="form-input" required placeholder="Например: Роман Кравцов">
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Телефон *</label>
+            <input type="text" id="newClientPhone" class="form-input" required placeholder="+7 (999) 000-00-00">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div>
+              <label class="form-label">Telegram (опционально)</label>
+              <input type="text" id="newClientTelegram" class="form-input" placeholder="@username">
+            </div>
+            <div>
+              <label class="form-label">Категория</label>
+              <select id="newClientCategory" class="form-select">
+                <option value="new">Новый гость</option>
+                <option value="regular">Постоянный гость</option>
+                <option value="vip">VIP гость</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Заметки о пожеланиях гостя</label>
+            <textarea id="newClientNotes" class="form-textarea" rows="2" placeholder="Предпочитаемые напитки, стиль, пожелания..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-secondary modal-close-trigger">Отмена</button>
+          <button type="submit" class="btn btn-primary">Добавить в базу</button>
         </div>
       </form>
     </div>
