@@ -744,7 +744,8 @@ class NoirDataService {
       SERVICES: "noir_services",
       SPECIALISTS: "noir_specialists",
       APPOINTMENTS: "noir_appointments",
-      CLIENTS: "noir_clients"
+      CLIENTS: "noir_clients",
+      PAYOUT_ORDERS: "noir_payout_ledger"
     };
 
     this.initDatabase();
@@ -769,6 +770,9 @@ class NoirDataService {
     }
     if (!localStorage.getItem(this.STORAGE_KEYS.CLIENTS)) {
       localStorage.setItem(this.STORAGE_KEYS.CLIENTS, JSON.stringify(DEFAULT_CLIENTS));
+    }
+    if (!localStorage.getItem(this.STORAGE_KEYS.PAYOUT_ORDERS)) {
+      localStorage.setItem(this.STORAGE_KEYS.PAYOUT_ORDERS, JSON.stringify(generateDemoPayoutOrders()));
     }
   }
 
@@ -1399,10 +1403,187 @@ class NoirDataService {
     };
   }
 
+  // ==========================================
+  // КАССОВЫЙ РЕЕСТР ВЫПЛАТ ЗАРПЛАТ (PAYOUT ORDERS)
+  // ==========================================
+  getPayoutOrders() {
+    try {
+      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PAYOUT_ORDERS)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  savePayoutOrders(orders) {
+    localStorage.setItem(this.STORAGE_KEYS.PAYOUT_ORDERS, JSON.stringify(orders));
+  }
+
+  getPayoutOrderForPeriod(specialistId, startDate, endDate) {
+    const orders = this.getPayoutOrders();
+    return orders.find(o => 
+      o.specialistId === specialistId && 
+      o.startDate === startDate && 
+      o.endDate === endDate && 
+      o.status !== 'cancelled'
+    ) || null;
+  }
+
+  createPayoutOrder({ specialistId, startDate, endDate, amount, grossRevenue, salonMargin, servicesCount, items, notes, paymentMethod, issuedBy }) {
+    const orders = this.getPayoutOrders();
+    const specialists = this.getSpecialists();
+    const sp = specialists.find(s => s.id === specialistId) || { name: "Специалист NOIR", role: "Мастер", avatar: "" };
+
+    const orderNum = 1000 + orders.length + 1;
+    const orderId = `PAY-${orderNum}`;
+    const now = new Date();
+
+    const newOrder = {
+      id: orderId,
+      orderNumber: orderNum,
+      createdAt: now.toISOString(),
+      dateFormatted: now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeFormatted: now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      specialistId: specialistId,
+      specialistName: sp.name,
+      specialistRole: sp.role,
+      specialistAvatar: sp.avatar,
+      commissionPercent: sp.commissionPercent || 40,
+      startDate: startDate,
+      endDate: endDate,
+      periodLabel: `${startDate} — ${endDate}`,
+      amount: amount,
+      grossRevenue: grossRevenue || 0,
+      salonMargin: salonMargin || 0,
+      servicesCount: servicesCount || (items ? items.length : 0),
+      paymentMethod: paymentMethod || "Наличные из кассы",
+      notes: notes || "Выплата зарплаты по итогам расчетного периода",
+      issuedBy: issuedBy || "Владелец NOIR Atelier",
+      status: "paid",
+      items: items || []
+    };
+
+    orders.unshift(newOrder);
+    this.savePayoutOrders(orders);
+    return newOrder;
+  }
+
+  cancelPayoutOrder(orderId, reason = "Отмена по согласованию") {
+    const orders = this.getPayoutOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = "cancelled";
+      order.cancelledAt = new Date().toISOString();
+      order.cancelReason = reason;
+      this.savePayoutOrders(orders);
+      return true;
+    }
+    return false;
+  }
+
   formatMoney(amount) {
     if (!amount || amount === 0) return "0 ₫";
     return amount.toLocaleString('ru-RU') + " ₫";
   }
+}
+
+function generateDemoPayoutOrders() {
+  const now = Date.now();
+  const d = (days) => new Date(now - days * 86400000);
+  const fmt = (dateObj) => dateObj.toISOString().split('T')[0];
+
+  const lastWeekMon = fmt(d(11));
+  const lastWeekSun = fmt(d(5));
+  const payoutDate = d(4);
+
+  return [
+    {
+      id: "PAY-1003",
+      orderNumber: 1003,
+      createdAt: payoutDate.toISOString(),
+      dateFormatted: payoutDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeFormatted: "19:40",
+      specialistId: "spec-alex",
+      specialistName: "Alex Gray",
+      specialistRole: "Арт-директор, ведущий топ-стилист",
+      specialistAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+      commissionPercent: 45,
+      startDate: lastWeekMon,
+      endDate: lastWeekSun,
+      periodLabel: `${lastWeekMon} — ${lastWeekSun} (Прошлая неделя)`,
+      amount: 1485000,
+      grossRevenue: 3300000,
+      salonMargin: 1815000,
+      servicesCount: 5,
+      paymentMethod: "Наличные из кассы",
+      notes: "Зарплата за прошлую неделю выплачена полностью.",
+      issuedBy: "Владелец NOIR Atelier",
+      status: "paid",
+      items: [
+        { date: lastWeekMon, time: "11:00", clientName: "Константин Новиков", serviceName: "Авторская стрижка NOIR (Signature Cut)", price: 450000, commissionPercent: 45, masterShare: 202500, salonShare: 247500 },
+        { date: fmt(d(9)), time: "13:30", clientName: "Сергей Лазарев", serviceName: "Камуфляж седины + Стрижка", price: 750000, commissionPercent: 45, masterShare: 337500, salonShare: 412500 },
+        { date: fmt(d(8)), time: "15:00", clientName: "Роман Громов", serviceName: "Премиальный комплекс NOIR Black Label", price: 900000, commissionPercent: 45, masterShare: 405000, salonShare: 495000 },
+        { date: fmt(d(7)), time: "12:00", clientName: "Александр Волков", serviceName: "Авторская стрижка NOIR", price: 450000, commissionPercent: 45, masterShare: 202500, salonShare: 247500 },
+        { date: fmt(d(6)), time: "16:00", clientName: "Максим Орлов", serviceName: "Моделирование бороды и усов", price: 750000, commissionPercent: 45, masterShare: 337500, salonShare: 412500 }
+      ]
+    },
+    {
+      id: "PAY-1002",
+      orderNumber: 1002,
+      createdAt: payoutDate.toISOString(),
+      dateFormatted: payoutDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeFormatted: "19:50",
+      specialistId: "spec-max",
+      specialistName: "Max Rivera",
+      specialistRole: "Шеф-барбер, эксперт мужских техник",
+      specialistAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+      commissionPercent: 40,
+      startDate: lastWeekMon,
+      endDate: lastWeekSun,
+      periodLabel: `${lastWeekMon} — ${lastWeekSun} (Прошлая неделя)`,
+      amount: 920000,
+      grossRevenue: 2300000,
+      salonMargin: 1380000,
+      servicesCount: 4,
+      paymentMethod: "Наличные из кассы",
+      notes: "Выплата за прошлую неделю",
+      issuedBy: "Владелец NOIR Atelier",
+      status: "paid",
+      items: [
+        { date: lastWeekMon, time: "12:00", clientName: "Дмитрий Смирнов", serviceName: "Комплекс «Отец + Сын»", price: 700000, commissionPercent: 40, masterShare: 280000, salonShare: 420000 },
+        { date: fmt(d(9)), time: "14:00", clientName: "Алексей Соколов", serviceName: "Королевское бритьё", price: 350000, commissionPercent: 40, masterShare: 140000, salonShare: 210000 },
+        { date: fmt(d(7)), time: "17:00", clientName: "Виктор Зубов", serviceName: "Авторская стрижка NOIR", price: 450000, commissionPercent: 40, masterShare: 180000, salonShare: 270000 },
+        { date: fmt(d(6)), time: "18:30", clientName: "Иван Денисов", serviceName: "Моделирование бороды и усов", price: 800000, commissionPercent: 40, masterShare: 320000, salonShare: 480000 }
+      ]
+    },
+    {
+      id: "PAY-1001",
+      orderNumber: 1001,
+      createdAt: payoutDate.toISOString(),
+      dateFormatted: payoutDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }),
+      timeFormatted: "20:05",
+      specialistId: "spec-elena",
+      specialistName: "Elena Rostova",
+      specialistRole: "Топ-стилист, колорист & SPA-эксперт",
+      specialistAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
+      commissionPercent: 40,
+      startDate: lastWeekMon,
+      endDate: lastWeekSun,
+      periodLabel: `${lastWeekMon} — ${lastWeekSun} (Прошлая неделя)`,
+      amount: 1100000,
+      grossRevenue: 2750000,
+      salonMargin: 1650000,
+      servicesCount: 3,
+      paymentMethod: "Безналичный расчет / Перевод",
+      notes: "Выплата на карту по реквизитам",
+      issuedBy: "Владелец NOIR Atelier",
+      status: "paid",
+      items: [
+        { date: fmt(d(10)), time: "13:00", clientName: "Екатерина Смирнова", serviceName: "Текстурная стрижка и стайлинг", price: 600000, commissionPercent: 40, masterShare: 240000, salonShare: 360000 },
+        { date: fmt(d(8)), time: "15:00", clientName: "Анна Мельникова", serviceName: "Сложное окрашивание Balayage / Airtouch", price: 1500000, commissionPercent: 40, masterShare: 600000, salonShare: 900000 },
+        { date: fmt(d(6)), time: "11:30", clientName: "Ольга Ковалева", serviceName: "Молекулярное восстановление волос", price: 650000, commissionPercent: 40, masterShare: 260000, salonShare: 390000 }
+      ]
+    }
+  ];
 }
 
 // Экспортируем глобальный экземпляр
