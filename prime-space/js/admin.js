@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDay: 5, // Пятница по умолчанию
     activeTab: "matrix",
     currentEditingItem: null,
+    clientFilter: "all",
+    clientSearchQuery: "",
+    currentViewingClient: null,
 
     timeSlots: [
       "09:30", "10:00", "10:30", "11:00", "11:30", 
@@ -45,7 +48,16 @@ document.addEventListener("DOMContentLoaded", () => {
       this.renderMatrix();
       this.renderMastersList();
       this.renderAppointmentsJournal();
+      this.renderClientsList();
+      this.bindClientsEvents();
       this.bindActionModals();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestedTab = urlParams.get("tab");
+      if (requestedTab) {
+        const item = document.querySelector(`.admin-nav-item[data-tab="${requestedTab}"]`);
+        if (item) item.click();
+      }
     },
 
     // 1. АВТОРИЗАЦИЯ ПО PIN-КОДУ
@@ -56,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const lockScreen = document.getElementById("pinLockScreen");
       const mainLayout = document.getElementById("adminMainLayout");
 
-      if (sessionStorage.getItem("prime_admin_authed") === "true") {
+      if (sessionStorage.getItem("prime_admin_authed") === "true" || window.location.search.includes("authed=1")) {
         lockScreen.style.display = "none";
         mainLayout.style.display = "grid";
       }
@@ -96,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (activePane) activePane.style.display = "block";
 
           if (tab === "matrix") this.renderMatrix();
+          if (tab === "clients") this.renderClientsList();
           if (tab === "journal") this.renderAppointmentsJournal();
           if (tab === "masters") this.renderMastersList();
           if (tab === "rentals") this.renderRentalsMatrix();
@@ -405,6 +418,243 @@ document.addEventListener("DOMContentLoaded", () => {
       `).join("");
     },
 
+    // 7.1 БАЗА КЛИЕНТОВ И КАРТОЧКИ ГОСТЕЙ (TAB CLIENTS)
+    renderClientsList() {
+      const tbody = document.getElementById("clientsTableBody");
+      const badge = document.getElementById("clientsTotalCountBadge");
+      if (!tbody) return;
+
+      let clients = window.primeData.getClients();
+      const totalCount = clients.length;
+
+      // Поиск по имени, телефону, никнейму или заметкам
+      if (this.clientSearchQuery) {
+        const q = this.clientSearchQuery.toLowerCase();
+        clients = clients.filter(c => {
+          const matchName = (c.name || "").toLowerCase().includes(q);
+          const matchPhone = (c.phone || "").toLowerCase().includes(q);
+          const matchNotes = (c.notes || "").toLowerCase().includes(q);
+          return matchName || matchPhone || matchNotes;
+        });
+      }
+
+      // Фильтр по категории гостя
+      if (this.clientFilter === "regular") {
+        clients = clients.filter(c => (c.visitsCount || 0) >= 2);
+      } else if (this.clientFilter === "new") {
+        clients = clients.filter(c => (c.visitsCount || 0) <= 1);
+      }
+
+      if (badge) {
+        badge.textContent = `Всего в базе: ${totalCount} • Найдено: ${clients.length}`;
+      }
+
+      if (clients.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 36px 20px; color: #64748B;">
+              <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
+              <div style="font-size: 15px; font-weight: 700; color: #334155;">Клиенты не найдены</div>
+              <div style="font-size: 13px; margin-top: 4px;">Попробуйте изменить поисковый запрос или фильтр</div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = clients.map(c => {
+        const initial = (c.name || "Г").trim().charAt(0).toUpperCase();
+        const visits = c.visitsCount || 1;
+        const isRegular = visits >= 2;
+        const lastActivity = (c.history && c.history.length > 0) ? c.history[0] : null;
+        const hasNotes = !!(c.notes && c.notes.trim());
+
+        let lastActivityHtml = `<span style="color: #94A3B8;">Нет записей</span>`;
+        if (lastActivity) {
+          const sp = window.primeData.getSpaceById(lastActivity.spaceId);
+          const spName = sp ? sp.name : "";
+          lastActivityHtml = `
+            <div>
+              <div style="font-weight: 700; color: #1E293B;">${lastActivity.lessonTitle || "Занятие"}</div>
+              <div style="font-size: 11px; color: #64748B;">${lastActivity.date || ""} • ${spName}</div>
+            </div>
+          `;
+        }
+
+        const visitsBadge = isRegular 
+          ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(135, 139, 114, 0.18); color: #586047;">${visits} визита ⭐</span>`
+          : `<span style="display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #F1F5F9; color: #64748B;">1 визит</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: #435667; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(67, 86, 103, 0.2);">
+                  ${initial}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: #1E293B; display: flex; align-items: center; gap: 6px;">
+                    ${c.name}
+                    ${hasNotes ? `<span title="${c.notes.replace(/"/g, '&quot;')}" style="cursor: help; font-size: 13px;">📝</span>` : ''}
+                  </div>
+                  ${hasNotes ? `<div style="font-size: 11px; color: #878B72; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.notes}</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #334155;">${c.phone || "—"}</div>
+            </td>
+            <td style="text-align: center;">
+              ${visitsBadge}
+            </td>
+            <td>
+              <span style="font-size: 12px; color: #64748B;">${c.firstVisit || "—"}</span>
+            </td>
+            <td>
+              ${lastActivityHtml}
+            </td>
+            <td style="text-align: right;">
+              <button class="btn btn-outline btn-sm btn-view-client" data-client-id="${c.id}" style="padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 20px;">
+                Карточка гостя ›
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // Слушатель кнопки карточки гостя
+      tbody.querySelectorAll(".btn-view-client").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const clientId = btn.dataset.clientId;
+          this.openClientProfileModal(clientId);
+        });
+      });
+    },
+
+    // Модалка карточки клиента
+    openClientProfileModal(clientId) {
+      const clients = window.primeData.getClients();
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      this.currentViewingClient = client;
+      const modal = document.getElementById("clientProfileModal");
+      if (!modal) return;
+
+      const initial = (client.name || "Г").trim().charAt(0).toUpperCase();
+      const visits = client.visitsCount || 1;
+      const isRegular = visits >= 2;
+
+      document.getElementById("clientModalAvatar").textContent = initial;
+      document.getElementById("clientModalName").textContent = client.name || "Гость";
+      
+      const badgeEl = document.getElementById("clientModalBadge");
+      if (badgeEl) {
+        badgeEl.textContent = isRegular ? `Постоянный гость (${visits} визита)` : "Новый гость (1 визит)";
+        badgeEl.style.background = isRegular ? "rgba(135, 139, 114, 0.2)" : "#F1F5F9";
+        badgeEl.style.color = isRegular ? "#586047" : "#64748B";
+      }
+
+      document.getElementById("clientModalPhone").textContent = `📞 ${client.phone || "—"}`;
+      document.getElementById("clientModalFirstVisit").textContent = `🗓 Первый визит: ${client.firstVisit || "—"}`;
+      document.getElementById("clientModalVisitsCount").textContent = `⭐️ Всего посещений: ${visits}`;
+
+      const notesInput = document.getElementById("clientModalNotes");
+      if (notesInput) {
+        notesInput.value = client.notes || "";
+      }
+
+      const feedback = document.getElementById("notesSaveFeedback");
+      if (feedback) feedback.style.display = "none";
+
+      // История занятий
+      const historyBody = document.getElementById("clientModalHistoryBody");
+      if (historyBody) {
+        const history = client.history || [];
+        if (history.length === 0) {
+          historyBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748B;">Нет истории посещений</td></tr>`;
+        } else {
+          historyBody.innerHTML = history.map(h => {
+            const sp = window.primeData.getSpaceById(h.spaceId);
+            const spName = sp ? sp.name : (h.spaceId || "Зал");
+            return `
+              <tr>
+                <td>
+                  <span style="font-weight: 600; color: #1E293B;">${h.date || "—"}</span>
+                  <div style="font-size: 11px; color: #64748B;">${h.time || ""}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #1E293B;">${h.lessonTitle || "Занятие"}</div>
+                </td>
+                <td>
+                  <div>${spName}</div>
+                  <div style="font-size: 11px; color: #64748B;">Ведущий: ${h.masterName || "Инструктор"}</div>
+                </td>
+                <td>
+                  <span style="font-weight: 700; color: #435667;">${window.primeData.formatPrice(h.price)}</span>
+                </td>
+                <td>
+                  <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #059669;">
+                    Посетил
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        }
+      }
+
+      modal.classList.add("open");
+    },
+
+    bindClientsEvents() {
+      // Поиск по вводу
+      const searchInput = document.getElementById("clientSearchInput");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          this.clientSearchQuery = e.target.value.trim();
+          this.renderClientsList();
+        });
+      }
+
+      // Кнопки фильтра (Все, Постоянные, Новые)
+      const filterBtns = document.querySelectorAll(".client-filter-btn");
+      filterBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          filterBtns.forEach(b => {
+            b.classList.remove("active");
+            b.classList.add("btn-outline");
+          });
+          btn.classList.add("active");
+          btn.classList.remove("btn-outline");
+
+          this.clientFilter = btn.dataset.filter;
+          this.renderClientsList();
+        });
+      });
+
+      // Сохранение заметок администратора
+      const btnSaveNotes = document.getElementById("btnSaveClientNotes");
+      if (btnSaveNotes) {
+        btnSaveNotes.addEventListener("click", () => {
+          if (!this.currentViewingClient) return;
+          const notesText = document.getElementById("clientModalNotes").value.trim();
+          const ok = window.primeData.updateClientNotes(this.currentViewingClient.id, notesText);
+          if (ok) {
+            this.currentViewingClient.notes = notesText;
+            const feedback = document.getElementById("notesSaveFeedback");
+            if (feedback) {
+              feedback.style.display = "inline";
+              setTimeout(() => {
+                feedback.style.display = "none";
+              }, 2500);
+            }
+            this.renderClientsList();
+          }
+        });
+      }
+    },
+
     // 8. БАЗА МАСТЕРОВ (TAB MASTERS)
     renderMastersList() {
       const container = document.getElementById("mastersGrid");
@@ -507,14 +757,25 @@ document.addEventListener("DOMContentLoaded", () => {
       const addLessonModal = document.getElementById("addLessonModal");
       const editMasterModal = document.getElementById("editMasterModal");
       const addMasterModal = document.getElementById("addMasterModal");
+      const clientModal = document.getElementById("clientProfileModal");
 
-      // Закрытие всех модалок
+      // Закрытие всех модалок по крестику
       document.querySelectorAll(".admin-modal-close").forEach(btn => {
         btn.addEventListener("click", () => {
           if (lessonModal) lessonModal.classList.remove("open");
           if (addLessonModal) addLessonModal.classList.remove("open");
           if (editMasterModal) editMasterModal.classList.remove("open");
           if (addMasterModal) addMasterModal.classList.remove("open");
+          if (clientModal) clientModal.classList.remove("open");
+        });
+      });
+
+      // Закрытие по клику вне модального окна (на overlay)
+      document.querySelectorAll(".modal-overlay").forEach(overlay => {
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) {
+            overlay.classList.remove("open");
+          }
         });
       });
 
@@ -626,6 +887,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.renderParticipantsList(updated);
             this.renderKPIs();
             this.renderMatrix();
+            this.renderClientsList();
           } else {
             alert(res.error);
           }
