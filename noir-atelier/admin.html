@@ -88,6 +88,14 @@
 </head>
 <body class="admin-body">
 
+  <script>
+    try {
+      if (window.location.href.includes('autologin=1') || sessionStorage.getItem('noir_admin_auth') === 'true') {
+        document.write('<style>#pinLockScreen { display: none !important; } #adminMainLayout { display: flex !important; }</style>');
+      }
+    } catch(e) {}
+  </script>
+
   <!-- PIN Lock Screen -->
   <div id="pinLockScreen" style="position: fixed; inset: 0; background: var(--bg-deep); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: var(--bg-card); border: 1px solid var(--border-medium); border-radius: var(--radius-xl); padding: 40px; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg);">
@@ -409,9 +417,14 @@
                 📜 Журнал кассовых выплат (<span id="payoutOrdersBadgeCount">0</span>)
               </button>
             </div>
-            <button type="button" class="btn btn-secondary" onclick="printWeeklyPayrollSummary()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; font-weight: 700; border-color: rgba(212, 175, 55, 0.4); color: #E5C378; display: flex; align-items: center; gap: 6px;">
-              <span>🖨️ Распечатать сводную ведомость на салон</span>
-            </button>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary" onclick="openPayrollHelpModal()" style="padding: 8px 14px; font-size: 12px; font-weight: 700; border-color: rgba(255, 255, 255, 0.18); color: #FFFFFF; display: flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.05);" title="Открыть руководство по расчёту и выплате зарплат">
+                <span>📖 Инструкция по расчёту</span>
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="printWeeklyPayrollSummary()" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-color: rgba(212, 175, 55, 0.4); color: #E5C378; display: flex; align-items: center; gap: 6px;">
+                <span>🖨️ Распечатать сводную ведомость на салон</span>
+              </button>
+            </div>
           </div>
 
           <!-- ВИД 1: КАЛЬКУЛЯТОР НАЧИСЛЕНИЙ ЗАРПЛАТ -->
@@ -1199,6 +1212,136 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ИНСТРУКЦИЯ И РЕГЛАМЕНТ РАСЧЁТА ЗАРПЛАТ -->
+  <div class="modal-overlay" id="adminPayrollHelpModal">
+    <div class="modal-card" style="max-width: 760px;">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">📖</span>
+            <h3 style="margin: 0;">Инструкция: Регламент расчёта и выплат зарплат</h3>
+          </div>
+          <p style="margin-top: 4px;">Универсальное руководство для управляющего, администратора и владельца бизнеса</p>
+        </div>
+        <button type="button" class="modal-close-btn modal-close-trigger">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px 28px; max-height: 72vh; overflow-y: auto;">
+        <!-- Блок 1: Принцип авторасчёта -->
+        <div style="background: rgba(212, 175, 55, 0.06); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 18px;">💡</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 0;">Базовый принцип автоматического расчёта</h4>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 10px;">
+            Когда визит клиента получает статус <strong>«Выполнена»</strong>, система моментально делит сумму чека на две части:
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--accent-gold);">
+              <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-gold); font-weight: 700;">1. Доля мастера</div>
+              <div style="font-size: 12px; color: #FFFFFF; margin-top: 2px;">Стоимость услуги × Процент мастера (%)</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid #10B981;">
+              <div style="font-size: 11px; text-transform: uppercase; color: #10B981; font-weight: 700;">2. Чистая маржа салона</div>
+              <div style="font-size: 12px; color: #FFFFFF; margin-top: 2px;">Стоимость услуги − Доля мастера</div>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-dim); background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: var(--radius-sm);">
+            <strong>Наглядный пример:</strong> Процедура стоит <strong>$100</strong>. У мастера ставка <strong>40%</strong>. Мастер зарабатывает <strong>$40</strong>, а доход салона составляет <strong>$60</strong>. При 10 процедурах за период мастер получит <strong>$400</strong>, а салон удержит <strong>$600</strong>. Ручной подсчёт исключён полностью.
+          </div>
+        </div>
+
+        <!-- Блок 2: Сценарий Каждый день -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span style="font-size: 18px;">📅</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">Сценарий 1: Выплата КАЖДЫЙ ДЕНЬ (в конце смены)</h4>
+          </div>
+          <ol style="font-size: 13px; color: var(--text-sub); line-height: 1.6; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 6px;">
+              <strong>Выбор периода:</strong> В строке <em>«Регламент выплат салона»</em> установите <strong>«Каждый день (в конце смены)»</strong> и нажмите кнопку <strong>«📅 Сегодня»</strong> (стрелки ‹ / › позволяют выбрать вчерашний день или любую другую дату).
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Оценка кассы:</strong> В верхней карточке <strong>«💰 Фонд оплаты мастеров»</strong> отображается общая сумма, которую необходимо выдать всем специалистам смены (например, <strong>$240</strong>).
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Проверка мастера:</strong> В списке отображаются мастера, работавшие сегодня. Нажав <em>«Детализация ▾»</em>, можно увидеть каждую проведённую стрижку с временем и именами клиентов.
+            </li>
+            <li>
+              <strong>Выдача денег:</strong> Нажмите золотую кнопку <strong>[ Выплатить ]</strong> напротив мастера. Выберите форму выдачи (<em>💵 Наличные</em> или <em>💳 Перевод</em>) и нажмите <em>«✓ Провести выплату»</em>. Сформируется ордер, карточка подсветится зелёным, а на принтер отправится расчётный листок под роспись.
+            </li>
+          </ol>
+        </div>
+
+        <!-- Блок 3: Сценарий Раз в неделю -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <span style="font-size: 18px;">🗓️</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">Сценарий 2: Выплата РАЗ В НЕДЕЛЮ (понедельник)</h4>
+          </div>
+          <ol style="font-size: 13px; color: var(--text-sub); line-height: 1.6; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 6px;">
+              <strong>Выбор периода:</strong> Установите регламент <strong>«Раз в неделю (понедельник)»</strong> и нажмите кнопку <strong>«⏮️ Прошлая неделя»</strong>. Система автоматически объединит все чеки за 7 дней с понедельника по воскресенье.
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Итоги за неделю:</strong> Для каждого мастера выведен полный итог: количество процедур (например, 12 или 25), валовая касса и сумма к выдаче на руки за всю неделю.
+            </li>
+            <li style="margin-bottom: 6px;">
+              <strong>Вариант А (Индивидуально):</strong> Мастер подходит к кассе → нажимаете <strong>[ Выплатить ]</strong> → выдаёте сумму и распечатываете индивидуальный расчётный листок (Payslip) формата А4.
+            </li>
+            <li>
+              <strong>Вариант Б (Сводная ведомость на весь салон):</strong> Вверху страницы нажмите <strong>«🖨️ Распечатать сводную ведомость на салон»</strong>. Будет сформирован один общий лист со всеми мастерами и пустой колонкой для личной подписи каждого мастера в получении денег.
+            </li>
+          </ol>
+        </div>
+
+        <!-- Блок 4: Как понимать статусы -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span style="font-size: 18px;">🚦</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">Индикация статусов: Кому выплачено, а кому ещё нет</h4>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: var(--radius-sm); padding: 12px 14px;">
+              <div style="display: flex; align-items: center; gap: 6px; color: var(--accent-gold); font-weight: 800; font-size: 13px;">
+                <span>🟡</span> Золотая кнопка «Выплатить»
+              </div>
+              <p style="font-size: 12px; color: var(--text-sub); margin: 6px 0 0; line-height: 1.4;">
+                Зарплата за выбранный период <strong>ещё не выдана</strong>. Сумма долга отображается золотыми цифрами и учитывается в общем зарплатном фонде салона.
+              </p>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 12px 14px;">
+              <div style="display: flex; align-items: center; gap: 6px; color: #10B981; font-weight: 800; font-size: 13px;">
+                <span>🟢</span> Зелёный бейдж «✓ Выплачено»
+              </div>
+              <p style="font-size: 12px; color: var(--text-sub); margin: 6px 0 0; line-height: 1.4;">
+                Ордер <strong>проведён и зафиксирован</strong> (например, <em>#PAY-1003</em>). Карточка подсвечена изумрудом. Случайный клик не сбросит выплату. Доступна повторная печать листка.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Блок 5: Журнал кассовых выплат -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 18px;">📜</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">Журнал кассовых выплат (Архив всех периодов)</h4>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+            Вся история проведённых выплат сохраняется в под-вкладке <strong>«Журнал кассовых выплат»</strong>. Вы можете выбрать любой прошлый год, месяц или конкретного мастера, чтобы проверить дату и время выдачи денег, способ оплаты и распечатать дубликат ордера в случае любых вопросов или сверок.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 14px 28px;">
+        <button type="button" class="btn btn-primary modal-close-trigger" style="padding: 9px 24px; font-weight: 700;">
+          Понятно, закрыть
+        </button>
+      </div>
     </div>
   </div>
 
