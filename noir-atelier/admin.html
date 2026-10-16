@@ -143,6 +143,10 @@
           <span>👤</span>
           <span>База клиентов</span>
         </div>
+        <div class="admin-nav-item" data-tab="payroll">
+          <span>💰</span>
+          <span>Расчёт зарплат</span>
+        </div>
       </nav>
 
       <div style="padding: 20px; border-top: 1px solid var(--border-subtle); margin-top: auto;">
@@ -266,10 +270,13 @@
                 След. неделя →
               </button>
             </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <div id="scheduleCurrentWeekLabel" style="font-weight: 700; color: #FFFFFF; font-size: 14px;">
                 Неделя
               </div>
+              <button type="button" class="btn btn-secondary" onclick="switchTab('payroll')" style="padding: 7px 14px; font-size: 12px; font-weight: 700; border-color: rgba(212,175,55,0.4); color: #E5C378;">
+                💰 Ведомость зарплат →
+              </button>
               <button type="button" class="btn btn-primary" id="openAddSpecialistBtn" onclick="openCreateSpecialistModal()" style="padding: 7px 14px; font-size: 12px; font-weight: 700;">
                 + Добавить мастера
               </button>
@@ -386,6 +393,101 @@
 
           <!-- Список клиентов -->
           <div id="adminClientsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Rendered dynamically via admin.js -->
+          </div>
+        </div>
+
+        <!-- TAB 6: ЗАРПЛАТНАЯ ВЕДОМОСТЬ МАСТЕРОВ -->
+        <div class="admin-tab-pane" id="tabPane_payroll" style="display: none;">
+          <!-- Шапка ведомости с настройками выплат -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 16px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.5px;">💰 Ведомость расчёта зарплат мастеров</h3>
+                <span style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.3); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">Авторасчёт</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px;" id="payrollSubHeader">
+                Начисления по выполненным услугам, процентная ставка каждого мастера и маржа салона
+              </p>
+            </div>
+
+            <!-- Настройка графика выплат салона -->
+            <div style="display: flex; align-items: center; gap: 12px; background: rgba(0, 0, 0, 0.35); padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.08);">
+              <label for="salonPayrollPeriodSelect" style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">
+                Регламент выплат салона:
+              </label>
+              <select id="salonPayrollPeriodSelect" class="form-select" onchange="changeSalonDefaultPayrollPeriod(this.value)" style="padding: 6px 12px; font-size: 12px; border-color: rgba(212, 175, 55, 0.4); color: var(--accent-gold); font-weight: 700; width: auto;">
+                <option value="weekly">Раз в неделю (понедельник)</option>
+                <option value="daily">Каждый день (в конце смены)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Панель переключения периодов и навигация -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary payroll-period-btn" id="payrollPeriodBtn_today" onclick="setPayrollPeriod('today')" style="padding: 7px 12px; font-size: 12px;">
+                📅 Сегодня
+              </button>
+              <button type="button" class="btn btn-primary payroll-period-btn" id="payrollPeriodBtn_weekly" onclick="setPayrollPeriod('weekly')" style="padding: 7px 12px; font-size: 12px;">
+                🗓️ Текущая неделя
+              </button>
+              <button type="button" class="btn btn-secondary payroll-period-btn" id="payrollPeriodBtn_lastweek" onclick="setPayrollPeriod('lastweek')" style="padding: 7px 12px; font-size: 12px;">
+                ⏮️ Прошлая неделя
+              </button>
+              <button type="button" class="btn btn-secondary payroll-period-btn" id="payrollPeriodBtn_month" onclick="setPayrollPeriod('month')" style="padding: 7px 12px; font-size: 12px;">
+                📆 Этот месяц
+              </button>
+            </div>
+
+            <!-- Навигация ‹ период › -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" class="btn btn-secondary" onclick="navigatePayrollPeriod(-1)" style="padding: 6px 10px; font-size: 12px;" title="Предыдущий период">
+                ‹
+              </button>
+              <div id="payrollCurrentPeriodLabel" style="font-weight: 700; color: #FFFFFF; font-size: 13px; min-width: 170px; text-align: center;">
+                Загрузка...
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="navigatePayrollPeriod(1)" style="padding: 6px 10px; font-size: 12px;" title="Следующий период">
+                ›
+              </button>
+            </div>
+
+            <!-- Опция учета подтвержденных записей -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-sub); user-select: none;">
+                <input type="checkbox" id="payrollIncludeConfirmedCheckbox" onchange="togglePayrollIncludeConfirmed(this.checked)" style="accent-color: var(--accent-gold); cursor: pointer;">
+                <span>Включать подтверждённые записи (план)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Сводные KPI за выбранный период -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px;">
+            <div class="kpi-card" style="padding: 16px 18px;">
+              <div class="kpi-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim);">💳 Выручка за период</div>
+              <div class="kpi-value" id="payrollKpiTotalRevenue" style="font-size: 24px; font-weight: 800; color: #FFFFFF; margin-top: 6px;">0 ₫</div>
+              <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Сумма оказанных услуг</div>
+            </div>
+            <div class="kpi-card" style="padding: 16px 18px; border-color: rgba(212, 175, 55, 0.35); background: linear-gradient(145deg, rgba(212, 175, 55, 0.08) 0%, rgba(18, 18, 18, 0.8) 100%);">
+              <div class="kpi-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-gold);">💰 Фонд оплаты мастеров</div>
+              <div class="kpi-value" id="payrollKpiTotalPayroll" style="font-size: 24px; font-weight: 800; color: var(--accent-gold); margin-top: 6px;">0 ₫</div>
+              <div style="font-size: 11px; color: var(--accent-gold-light); margin-top: 4px;">Итого к выплате специалистам</div>
+            </div>
+            <div class="kpi-card" style="padding: 16px 18px;">
+              <div class="kpi-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim);">🏛️ Маржа салона (доход)</div>
+              <div class="kpi-value" id="payrollKpiSalonMargin" style="font-size: 24px; font-weight: 800; color: #10B981; margin-top: 6px;">0 ₫</div>
+              <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Остаётся после выплаты зарплат</div>
+            </div>
+            <div class="kpi-card" style="padding: 16px 18px;">
+              <div class="kpi-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim);">✂️ Оказано услуг</div>
+              <div class="kpi-value" id="payrollKpiServicesCount" style="font-size: 24px; font-weight: 800; color: #FFFFFF; margin-top: 6px;">0</div>
+              <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Процедур в ведомости</div>
+            </div>
+          </div>
+
+          <!-- Список мастеров и детализация начислений -->
+          <div id="payrollTableContainer" style="display: flex; flex-direction: column; gap: 14px;">
             <!-- Rendered dynamically via admin.js -->
           </div>
         </div>
@@ -582,6 +684,27 @@
           <div class="form-group">
             <label class="form-label">Ссылка на фото (аватар)</label>
             <input type="url" id="specEditAvatar" class="form-input" placeholder="https://images.unsplash.com/photo-...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Процент мастера от выручки (%): *</span>
+              <span style="font-size: 11px; color: var(--accent-gold); font-weight: normal;">Для ведомости зарплат</span>
+            </label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+              <input type="number" id="specEditCommission" class="form-input" min="0" max="100" step="1" required placeholder="40" style="max-width: 100px; font-weight: 800; color: var(--accent-gold); font-size: 15px; text-align: center;">
+              <span style="font-weight: 800; color: var(--text-muted); font-size: 16px;">%</span>
+              <div style="display: flex; gap: 4px; margin-left: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" onclick="setSpecCommission(30)" style="padding: 4px 8px; font-size: 11px;">30%</button>
+                <button type="button" class="btn btn-secondary" onclick="setSpecCommission(35)" style="padding: 4px 8px; font-size: 11px;">35%</button>
+                <button type="button" class="btn btn-secondary" onclick="setSpecCommission(40)" style="padding: 4px 8px; font-size: 11px;">40%</button>
+                <button type="button" class="btn btn-secondary" onclick="setSpecCommission(45)" style="padding: 4px 8px; font-size: 11px;">45%</button>
+                <button type="button" class="btn btn-secondary" onclick="setSpecCommission(50)" style="padding: 4px 8px; font-size: 11px;">50%</button>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim); margin-top: 5px;">
+              От суммы каждой выполненной услуги мастер получает этот процент.
+            </div>
           </div>
 
           <div class="form-group">
