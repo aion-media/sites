@@ -56,13 +56,24 @@ function setupAuth() {
   const pinScreen = document.getElementById('pinLockScreen');
   const mainLayout = document.getElementById('adminMainLayout');
 
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('autologin') === '1') {
-    sessionStorage.setItem('noir_admin_auth', 'true');
-  }
+  const href = window.location.href;
+  const isAutoLogin = href.includes('autologin=1');
 
-  // Проверка сессии
-  if (sessionStorage.getItem('noir_admin_auth') === 'true' || (pinScreen && pinScreen.style.display === 'none')) {
+  try {
+    if (isAutoLogin) {
+      sessionStorage.setItem('noir_admin_auth', 'true');
+    }
+  } catch (e) {}
+
+  let isAuth = isAutoLogin;
+  try {
+    if (sessionStorage.getItem('noir_admin_auth') === 'true') {
+      isAuth = true;
+    }
+  } catch (e) {}
+
+  // Проверка сессии или параметра autologin
+  if (isAuth || (pinScreen && pinScreen.style.display === 'none')) {
     if (pinScreen) pinScreen.style.display = 'none';
     if (mainLayout) mainLayout.style.display = 'flex';
     loadDashboard();
@@ -214,7 +225,9 @@ function loadDashboard() {
   updateKPIs();
   switchTab(currentTab);
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const href = window.location.href;
+  const search = window.location.search || (href.includes('?') ? href.substring(href.indexOf('?')) : '');
+  const urlParams = new URLSearchParams(search);
   const targetTab = urlParams.get('tab');
   const openSpec = urlParams.get('openSpec');
   const addSpec = urlParams.get('addSpec');
@@ -278,6 +291,23 @@ function loadDashboard() {
     setTimeout(() => {
       setPayrollPeriod(payrollPeriod);
     }, 150);
+  }
+
+  const payrollSubView = urlParams.get('payrollSubView');
+  if (payrollSubView) {
+    switchTab('payroll');
+    setTimeout(() => {
+      switchPayrollSubView(payrollSubView);
+    }, 150);
+  }
+
+  const openPayout = urlParams.get('openPayout');
+  if (openPayout) {
+    switchTab('payroll');
+    setTimeout(() => {
+      const dateRange = getPayrollDateRange();
+      openPayoutModal(openPayout === '1' ? 'spec-alex' : openPayout, dateRange.startDate, dateRange.endDate);
+    }, 200);
   }
 }
 
@@ -1224,6 +1254,64 @@ function setupModals() {
       }
     });
   }
+
+  // Оформление кассовой выплаты мастеру
+  const payoutForm = document.getElementById('adminPayoutConfirmForm');
+  if (payoutForm) {
+    payoutForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const specId = document.getElementById('payoutFormSpecId').value;
+      const startDate = document.getElementById('payoutFormStartDate').value;
+      const endDate = document.getElementById('payoutFormEndDate').value;
+      const amount = parseInt(document.getElementById('payoutFormAmount').value, 10) || 0;
+      const grossRevenue = parseInt(document.getElementById('payoutFormGross').value, 10) || 0;
+      const salonMargin = parseInt(document.getElementById('payoutFormMargin').value, 10) || 0;
+      const servicesCount = parseInt(document.getElementById('payoutFormCount').value, 10) || 0;
+      const paymentMethod = document.getElementById('payoutMethodSelect').value;
+      const issuedBy = document.getElementById('payoutIssuedByInput').value.trim() || 'Владелец NOIR Atelier';
+      const notes = document.getElementById('payoutNotesInput').value.trim();
+      const autoPrint = document.getElementById('payoutAutoPrintCheckbox').checked;
+
+      // Детализация услуг мастера за этот период
+      const payrollData = window.noirData.calculatePayroll({
+        startDate,
+        endDate,
+        includeConfirmed: payrollIncludeConfirmed
+      });
+      const sp = payrollData.specialists.find(s => s.specialistId === specId);
+      const items = sp ? sp.items : [];
+      const periodLabel = getPayrollDateRange().label;
+
+      const newOrder = window.noirData.createPayoutOrder({
+        specialistId: specId,
+        startDate,
+        endDate,
+        periodLabel,
+        amount,
+        grossRevenue,
+        salonMargin,
+        servicesCount,
+        paymentMethod,
+        notes,
+        issuedBy,
+        items
+      });
+
+      const modal = document.getElementById('adminPayoutConfirmModal');
+      if (modal) modal.classList.remove('active');
+
+      renderPayrollAdmin();
+      if (typeof renderPayoutLedger === 'function') {
+        renderPayoutLedger();
+      }
+
+      if (autoPrint && newOrder) {
+        setTimeout(() => {
+          printSpecialistPayslip(newOrder.id);
+        }, 200);
+      }
+    });
+  }
 }
 
 window.openQuickBookingFor = function(specialistId, time) {
@@ -2012,15 +2100,95 @@ window.toggleMasterPayrollDetails = function(specId) {
   renderPayrollAdmin();
 };
 
-window.toggleMasterPayoutStatus = function(specId, startDate, endDate) {
-  const key = `noir_payout_${specId}_${startDate}_${endDate}`;
-  const current = localStorage.getItem(key);
-  if (current === 'paid') {
-    localStorage.removeItem(key);
+let currentPayrollSubView = 'calc';
+
+window.switchPayrollSubView = function(subView) {
+  currentPayrollSubView = subView;
+  const calcTabBtn = document.getElementById('payrollSubTab_calc');
+  const ledgerTabBtn = document.getElementById('payrollSubTab_ledger');
+  const calcView = document.getElementById('payrollSubView_calc');
+  const ledgerView = document.getElementById('payrollSubView_ledger');
+
+  if (subView === 'calc') {
+    if (calcTabBtn) {
+      calcTabBtn.classList.remove('btn-secondary');
+      calcTabBtn.classList.add('btn-primary');
+    }
+    if (ledgerTabBtn) {
+      ledgerTabBtn.classList.remove('btn-primary');
+      ledgerTabBtn.classList.add('btn-secondary');
+    }
+    if (calcView) calcView.style.display = 'block';
+    if (ledgerView) ledgerView.style.display = 'none';
+    renderPayrollAdmin();
   } else {
-    localStorage.setItem(key, 'paid');
+    if (calcTabBtn) {
+      calcTabBtn.classList.remove('btn-primary');
+      calcTabBtn.classList.add('btn-secondary');
+    }
+    if (ledgerTabBtn) {
+      ledgerTabBtn.classList.remove('btn-secondary');
+      ledgerTabBtn.classList.add('btn-primary');
+    }
+    if (calcView) calcView.style.display = 'none';
+    if (ledgerView) ledgerView.style.display = 'block';
+    renderPayoutLedger();
   }
-  renderPayrollAdmin();
+
+  // Обновляем бейдж общего количества ордеров
+  const orders = window.noirData.getPayoutOrders();
+  const badgeEl = document.getElementById('payoutOrdersBadgeCount');
+  if (badgeEl) badgeEl.textContent = orders.length;
+};
+
+window.openPayoutModal = function(specId, startDate, endDate) {
+  const modal = document.getElementById('adminPayoutConfirmModal');
+  if (!modal) return;
+
+  const dateRange = getPayrollDateRange();
+  const payrollData = window.noirData.calculatePayroll({
+    startDate: startDate || dateRange.startDate,
+    endDate: endDate || dateRange.endDate,
+    includeConfirmed: payrollIncludeConfirmed
+  });
+
+  const sp = payrollData.specialists.find(s => s.specialistId === specId);
+  if (!sp) return;
+
+  document.getElementById('payoutFormSpecId').value = sp.specialistId;
+  document.getElementById('payoutFormStartDate').value = startDate || dateRange.startDate;
+  document.getElementById('payoutFormEndDate').value = endDate || dateRange.endDate;
+  document.getElementById('payoutFormAmount').value = sp.masterPayroll;
+  document.getElementById('payoutFormGross').value = sp.grossRevenue;
+  document.getElementById('payoutFormMargin').value = sp.salonMargin;
+  document.getElementById('payoutFormCount').value = sp.totalServicesCount;
+
+  const avatarEl = document.getElementById('payoutModalAvatar');
+  if (avatarEl) avatarEl.src = sp.specialistAvatar;
+
+  const nameEl = document.getElementById('payoutModalMasterName');
+  if (nameEl) nameEl.textContent = sp.specialistName;
+
+  const roleEl = document.getElementById('payoutModalMasterRole');
+  if (roleEl) roleEl.textContent = `${sp.specialistRole} • Ставка ${sp.commissionPercent}%`;
+
+  const periodEl = document.getElementById('payoutModalPeriod');
+  if (periodEl) periodEl.textContent = `Период: ${dateRange.label}`;
+
+  const amountEl = document.getElementById('payoutModalAmountDisplay');
+  if (amountEl) amountEl.textContent = window.noirData.formatMoney(sp.masterPayroll);
+
+  const statsEl = document.getElementById('payoutModalStatsSummary');
+  if (statsEl) {
+    statsEl.textContent = `По ${sp.totalServicesCount} выполненным услугам (касса: ${window.noirData.formatMoney(sp.grossRevenue)}, маржа салона: ${window.noirData.formatMoney(sp.salonMargin)})`;
+  }
+
+  const notesEl = document.getElementById('payoutNotesInput');
+  if (notesEl) {
+    notesEl.value = `Выплата зарплаты мастеру ${sp.specialistName} за период ${dateRange.label}.`;
+  }
+
+  modal.classList.add('active');
 };
 
 function renderPayrollAdmin() {
@@ -2028,6 +2196,11 @@ function renderPayrollAdmin() {
   if (!container) return;
 
   const dateRange = getPayrollDateRange();
+
+  // Обновляем бейдж кассовых ордеров в под-вкладке
+  const allOrders = window.noirData.getPayoutOrders();
+  const badgeEl = document.getElementById('payoutOrdersBadgeCount');
+  if (badgeEl) badgeEl.textContent = allOrders.length;
 
   // Обновляем плашку периода
   const labelEl = document.getElementById('payrollCurrentPeriodLabel');
@@ -2072,25 +2245,28 @@ function renderPayrollAdmin() {
 
   payrollData.specialists.forEach(sp => {
     const isExpanded = !!expandedPayrollMasters[sp.specialistId];
-    const payoutKey = `noir_payout_${sp.specialistId}_${dateRange.startDate}_${dateRange.endDate}`;
-    const isPaid = localStorage.getItem(payoutKey) === 'paid';
+    
+    // Проверяем наличие защищённого кассового ордера на этот период
+    const paidOrder = window.noirData.getPayoutOrderForPeriod(sp.specialistId, dateRange.startDate, dateRange.endDate);
+    const isPaid = !!paidOrder;
 
     html += `
-      <div style="background: var(--bg-card); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.35)' : 'var(--border-subtle)'}; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s ease;">
+      <div style="background: var(--bg-card); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.45)' : 'var(--border-subtle)'}; ${isPaid ? 'box-shadow: 0 0 16px -4px rgba(16, 185, 129, 0.25);' : ''} border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s ease;">
         <!-- Основная строка мастера -->
-        <div style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: ${isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent'};">
+        <div style="padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; background: ${isPaid ? 'rgba(16, 185, 129, 0.05)' : 'transparent'};">
           <!-- Левая часть: фото и данные мастера -->
           <div style="display: flex; align-items: center; gap: 14px; min-width: 240px;">
             <img src="${sp.specialistAvatar}" alt="${sp.specialistName}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid ${isPaid ? '#10B981' : 'var(--accent-gold)'};">
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <h4 style="font-size: 15px; font-weight: 800; color: #FFFFFF; margin: 0;">${sp.specialistName}</h4>
                 <span style="background: rgba(212, 175, 55, 0.15); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.3); padding: 2px 7px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 800;">
                   ${sp.commissionPercent}% ставка
                 </span>
                 ${isPaid ? `
-                  <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700;">
-                    ✓ Выплачено
+                  <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 9px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                    <span>✓ Выплачено</span>
+                    <span style="color: #6EE7B7; font-size: 10px; font-family: var(--font-mono);">(#${paidOrder.id})</span>
                   </span>
                 ` : ''}
               </div>
@@ -2115,10 +2291,12 @@ function renderPayrollAdmin() {
               <div style="font-size: 14px; font-weight: 700; color: #10B981; margin-top: 2px;">${window.noirData.formatMoney(sp.salonMargin)}</div>
             </div>
 
-            <div style="text-align: right; background: rgba(212, 175, 55, 0.08); padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.25);">
-              <div style="font-size: 11px; color: var(--accent-gold); text-transform: uppercase; font-weight: 700;">К выплате мастеру</div>
-              <div style="font-size: 18px; font-weight: 900; color: var(--accent-gold); margin-top: 1px;">
-                ${window.noirData.formatMoney(sp.masterPayroll)}
+            <div style="text-align: right; background: ${isPaid ? 'rgba(16, 185, 129, 0.08)' : 'rgba(212, 175, 55, 0.08)'}; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid ${isPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(212, 175, 55, 0.25)'};">
+              <div style="font-size: 11px; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; text-transform: uppercase; font-weight: 700;">
+                ${isPaid ? 'Выплачено на руки' : 'К выплате мастеру'}
+              </div>
+              <div style="font-size: 18px; font-weight: 900; color: ${isPaid ? '#10B981' : 'var(--accent-gold)'}; margin-top: 1px;">
+                ${window.noirData.formatMoney(isPaid ? paidOrder.amount : sp.masterPayroll)}
               </div>
             </div>
           </div>
@@ -2131,11 +2309,12 @@ function renderPayrollAdmin() {
             </button>
 
             ${isPaid ? `
-              <button type="button" class="btn" onclick="toggleMasterPayoutStatus('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 14px; font-size: 12px; font-weight: 700;">
-                ✓ Выплачено
+              <!-- Защищённая выплата: случайный клик не сбросит ордер, доступна печать расчётного листка -->
+              <button type="button" class="btn btn-secondary" onclick="printSpecialistPayslip('${paidOrder.id}')" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 7px 14px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;" title="Распечатать расчётный листок (А4)">
+                <span>🖨️ Листок (Payslip)</span>
               </button>
             ` : `
-              <button type="button" class="btn btn-primary" onclick="toggleMasterPayoutStatus('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="padding: 7px 14px; font-size: 12px; font-weight: 700;" ${sp.masterPayroll === 0 ? 'disabled style="opacity: 0.5;"' : ''}>
+              <button type="button" class="btn btn-primary" onclick="openPayoutModal('${sp.specialistId}', '${dateRange.startDate}', '${dateRange.endDate}')" style="padding: 7px 16px; font-size: 12px; font-weight: 800;" ${sp.masterPayroll === 0 ? 'disabled style="opacity: 0.5;"' : ''}>
                 Выплатить
               </button>
             `}
@@ -2208,5 +2387,468 @@ function renderPayrollAdmin() {
 
   container.innerHTML = html;
 }
+
+// ==========================================
+// 6.2 ЖУРНАЛ КАССОВЫХ ВЫПЛАТ (АРХИВ И ИСТОРИЯ)
+// ==========================================
+window.renderPayoutLedger = function() {
+  const container = document.getElementById('payoutLedgerTableContainer');
+  if (!container) return;
+
+  // Динамически заполняем селектор специалистов, если ещё не заполнен
+  const specSelect = document.getElementById('ledgerSpecialistSelect');
+  if (specSelect && (!specSelect.options || specSelect.options.length <= 1)) {
+    const specialists = window.noirData.getSpecialists();
+    specSelect.innerHTML = `<option value="all">Все мастера</option>` + specialists.map(s => `
+      <option value="${s.id}">${s.name}</option>
+    `).join('');
+  }
+
+  const searchVal = (document.getElementById('ledgerSearchInput')?.value || '').toLowerCase().trim();
+  const yearVal = document.getElementById('ledgerYearSelect')?.value || 'all';
+  const monthVal = document.getElementById('ledgerMonthSelect')?.value || 'all';
+  const specVal = document.getElementById('ledgerSpecialistSelect')?.value || 'all';
+
+  const orders = window.noirData.getPayoutOrders();
+
+  // Фильтрация ордеров
+  const filtered = orders.filter(o => {
+    if (o.status === 'cancelled') return false;
+
+    const orderDate = o.createdAt ? new Date(o.createdAt) : new Date(o.startDate);
+
+    if (yearVal !== 'all') {
+      const orderYear = orderDate.getFullYear().toString();
+      if (orderYear !== yearVal && !(o.startDate && o.startDate.startsWith(yearVal))) return false;
+    }
+
+    if (monthVal !== 'all') {
+      if (orderDate.getMonth().toString() !== monthVal) return false;
+    }
+
+    if (specVal !== 'all' && o.specialistId !== specVal) {
+      return false;
+    }
+
+    if (searchVal) {
+      const searchTarget = `${o.id} ${o.specialistName} ${o.paymentMethod || ''} ${o.notes || ''} ${o.issuedBy || ''}`.toLowerCase();
+      if (!searchTarget.includes(searchVal)) return false;
+    }
+
+    return true;
+  });
+
+  // Расчёт и обновление сводных KPI
+  const count = filtered.length;
+  const paidTotal = filtered.reduce((acc, o) => acc + (o.amount || 0), 0);
+  const grossTotal = filtered.reduce((acc, o) => acc + (o.grossRevenue || 0), 0);
+  const marginTotal = filtered.reduce((acc, o) => acc + (o.salonMargin || 0), 0);
+
+  const kpiCount = document.getElementById('ledgerKpiCount');
+  const kpiPaid = document.getElementById('ledgerKpiPaidTotal');
+  const kpiGross = document.getElementById('ledgerKpiGrossTotal');
+  const kpiMargin = document.getElementById('ledgerKpiMarginTotal');
+
+  if (kpiCount) kpiCount.textContent = count;
+  if (kpiPaid) kpiPaid.textContent = window.noirData.formatMoney(paidTotal);
+  if (kpiGross) kpiGross.textContent = window.noirData.formatMoney(grossTotal);
+  if (kpiMargin) kpiMargin.textContent = window.noirData.formatMoney(marginTotal);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 48px 20px; text-align: center; color: var(--text-dim);">
+        <div style="font-size: 36px; margin-bottom: 10px;">📜</div>
+        <div style="font-size: 15px; font-weight: 800; color: #FFFFFF;">Кассовых ордеров не найдено</div>
+        <div style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">
+          По выбранным фильтрам периода или поисковому запросу нет проведённых выплат.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden;">
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+          <thead>
+            <tr style="background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-subtle); color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <th style="padding: 12px 16px; font-weight: 700;">№ Ордера</th>
+              <th style="padding: 12px 14px; font-weight: 700;">Дата и время</th>
+              <th style="padding: 12px 16px; font-weight: 700;">Мастер</th>
+              <th style="padding: 12px 14px; font-weight: 700;">Период начисления</th>
+              <th style="padding: 12px 12px; font-weight: 700; text-align: center;">Услуг</th>
+              <th style="padding: 12px 14px; font-weight: 700; text-align: right;">Касса мастера</th>
+              <th style="padding: 12px 14px; font-weight: 700; text-align: right;">Доход салона</th>
+              <th style="padding: 12px 16px; font-weight: 700; text-align: right;">Выдано на руки</th>
+              <th style="padding: 12px 14px; font-weight: 700;">Способ выдачи</th>
+              <th style="padding: 12px 16px; font-weight: 700; text-align: center;">Документ</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+  filtered.forEach(o => {
+    html += `
+      <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background 0.15s ease;" onmouseenter="this.style.background='rgba(255,255,255,0.02)'" onmouseleave="this.style.background='transparent'">
+        <td style="padding: 14px 16px; font-family: var(--font-mono); font-weight: 800; color: var(--accent-gold); white-space: nowrap;">
+          #${o.id}
+        </td>
+        <td style="padding: 14px 14px; white-space: nowrap;">
+          <div style="font-weight: 600; color: #FFFFFF;">${o.dateFormatted}</div>
+          <div style="font-size: 11px; color: var(--text-dim);">${o.timeFormatted || '18:00'}</div>
+        </td>
+        <td style="padding: 14px 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="${o.specialistAvatar}" alt="${o.specialistName}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--accent-gold);">
+            <div>
+              <div style="font-weight: 800; color: #FFFFFF; font-size: 13px;">${o.specialistName}</div>
+              <div style="font-size: 11px; color: var(--text-dim);">${o.commissionPercent}% ставка</div>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 14px 14px; font-size: 12px; color: var(--text-sub);">
+          ${o.periodLabel || (o.startDate + ' — ' + o.endDate)}
+        </td>
+        <td style="padding: 14px 12px; text-align: center; font-weight: 700; color: #FFFFFF;">
+          ${o.servicesCount || (o.items ? o.items.length : 0)}
+        </td>
+        <td style="padding: 14px 14px; text-align: right; font-weight: 600; color: var(--text-sub); white-space: nowrap;">
+          ${window.noirData.formatMoney(o.grossRevenue)}
+        </td>
+        <td style="padding: 14px 14px; text-align: right; font-weight: 700; color: #10B981; white-space: nowrap;">
+          ${window.noirData.formatMoney(o.salonMargin)}
+        </td>
+        <td style="padding: 14px 16px; text-align: right; white-space: nowrap;">
+          <div style="font-size: 15px; font-weight: 900; color: var(--accent-gold);">
+            ${window.noirData.formatMoney(o.amount)}
+          </div>
+        </td>
+        <td style="padding: 14px 14px; font-size: 12px; color: var(--text-muted);">
+          <span style="background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 4px; font-size: 11px;">
+            ${o.paymentMethod || 'Наличные из кассы'}
+          </span>
+        </td>
+        <td style="padding: 14px 16px; text-align: center; white-space: nowrap;">
+          <button type="button" class="btn btn-secondary" onclick="printSpecialistPayslip('${o.id}')" style="padding: 6px 12px; font-size: 11px; font-weight: 700; border-color: rgba(212, 175, 55, 0.4); color: #E5C378; display: inline-flex; align-items: center; gap: 5px;" title="Распечатать расчётный листок А4">
+            <span>🖨️ Листок (А4)</span>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+};
+
+// ==========================================
+// 6.3 ПЕЧАТЬ РАСЧЁТНОГО ЛИСТКА МАСТЕРА (А4)
+// ==========================================
+window.printSpecialistPayslip = function(orderId) {
+  const orders = window.noirData.getPayoutOrders();
+  const order = orders.find(o => o.id === orderId);
+  if (!order) {
+    alert("Ордер #" + orderId + " не найден в базе кассовых выплат.");
+    return;
+  }
+
+  const printArea = document.getElementById('printableDocumentArea');
+  if (!printArea) return;
+
+  const salon = window.noirData.getSalonInfo();
+
+  let itemsHtml = '';
+  if (order.items && order.items.length > 0) {
+    itemsHtml = order.items.map((it, idx) => `
+      <tr style="border-bottom: 1px solid #E5E7EB;">
+        <td style="padding: 7px 8px; color: #6B7280; text-align: center;">${idx + 1}</td>
+        <td style="padding: 7px 8px; font-weight: 600; white-space: nowrap;">${it.date} в ${it.time}</td>
+        <td style="padding: 7px 8px;">${it.clientName || 'Гость салона'}</td>
+        <td style="padding: 7px 8px; font-weight: 600;">${it.serviceName}</td>
+        <td style="padding: 7px 8px; text-align: right; font-weight: 600;">${window.noirData.formatMoney(it.price)}</td>
+        <td style="padding: 7px 8px; text-align: center; color: #6B7280;">${it.commissionPercent || order.commissionPercent}%</td>
+        <td style="padding: 7px 8px; text-align: right; font-weight: 800; color: #000000;">${window.noirData.formatMoney(it.masterShare)}</td>
+        <td style="padding: 7px 8px; text-align: right; color: #059669; font-weight: 600;">${window.noirData.formatMoney(it.salonShare)}</td>
+      </tr>
+    `).join('');
+  } else {
+    itemsHtml = `
+      <tr style="border-bottom: 1px solid #E5E7EB;">
+        <td colspan="8" style="padding: 14px 10px; text-align: center; color: #6B7280;">
+          Выполненные услуги за расчётный период (${order.servicesCount} услуг, валовая касса ${window.noirData.formatMoney(order.grossRevenue)}).
+        </td>
+      </tr>
+    `;
+  }
+
+  printArea.innerHTML = `
+    <div style="padding: 24px 32px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #111827; background: #FFFFFF; line-height: 1.45;">
+      <!-- Шапка салона -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111827; padding-bottom: 16px; margin-bottom: 20px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h1 style="font-size: 24px; font-weight: 900; letter-spacing: 1.5px; margin: 0; color: #000000;">NOIR HAIR ATELIER</h1>
+            <span style="font-size: 11px; background: #111827; color: #FFFFFF; padding: 2px 6px; border-radius: 3px; font-weight: 700;">ORIGINAL</span>
+          </div>
+          <p style="font-size: 12px; color: #4B5563; margin: 4px 0 0;">Премиальное ателье авторских стрижек, сложного окрашивания и SPA</p>
+          <p style="font-size: 11px; color: #6B7280; margin: 2px 0 0;">📍 ${salon.address || '48 An Thuong 2, Da Nang'} • 📞 ${salon.phone || '+84 90 123 4567'} • 🌐 noir.viet</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="display: inline-block; background: #F3F4F6; border: 1px solid #D1D5DB; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+            Расходный кассовый ордер
+          </div>
+          <h2 style="font-size: 20px; font-weight: 900; margin: 6px 0 2px; color: #111827; font-family: monospace;">Ордер #${order.id}</h2>
+          <p style="font-size: 11px; color: #6B7280; margin: 0;">Выдан: ${order.dateFormatted} в ${order.timeFormatted || '18:00'}</p>
+        </div>
+      </div>
+
+      <!-- Данные мастера и период начисления -->
+      <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 16px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 18px; margin-bottom: 20px;">
+        <div>
+          <div style="font-size: 10px; color: #6B7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Получатель денежных средств (Мастер):</div>
+          <div style="font-size: 17px; font-weight: 900; color: #111827; margin-top: 2px;">${order.specialistName}</div>
+          <div style="font-size: 12px; color: #4B5563; margin-top: 2px;">
+            ${order.specialistRole} • Индивидуальная ставка: <strong>${order.commissionPercent}%</strong>
+          </div>
+        </div>
+        <div style="border-left: 1px solid #E5E7EB; padding-left: 16px;">
+          <div style="font-size: 10px; color: #6B7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Расчётный период:</div>
+          <div style="font-size: 13px; font-weight: 800; color: #111827; margin-top: 2px;">${order.periodLabel || (order.startDate + ' — ' + order.endDate)}</div>
+          <div style="font-size: 11px; color: #059669; font-weight: 800; margin-top: 3px;">
+            ✓ Закрыт и проведён по кассе
+          </div>
+        </div>
+      </div>
+
+      <!-- Детализация оказанных услуг -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #374151; margin: 0;">
+            Детализация услуг мастера за расчётный период
+          </h3>
+          <span style="font-size: 11px; color: #6B7280;">Всего процедур: <strong>${order.servicesCount || (order.items ? order.items.length : 0)}</strong></span>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+          <thead>
+            <tr style="background: #F3F4F6; border-top: 1px solid #D1D5DB; border-bottom: 1px solid #D1D5DB; color: #374151;">
+              <th style="padding: 7px 8px; width: 28px; text-align: center;">№</th>
+              <th style="padding: 7px 8px;">Дата / Время</th>
+              <th style="padding: 7px 8px;">Гость</th>
+              <th style="padding: 7px 8px;">Наименование процедуры</th>
+              <th style="padding: 7px 8px; text-align: right;">Чек гостя</th>
+              <th style="padding: 7px 8px; text-align: center;">Ставка</th>
+              <th style="padding: 7px 8px; text-align: right;">Мастеру (${order.commissionPercent}%)</th>
+              <th style="padding: 7px 8px; text-align: right;">Салону</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background: #F9FAFB; border-top: 2px solid #D1D5DB; font-weight: 800;">
+              <td colspan="4" style="padding: 8px 8px; text-align: right;">ИТОГО ПО ВЕДОМОСТИ:</td>
+              <td style="padding: 8px 8px; text-align: right;">${window.noirData.formatMoney(order.grossRevenue)}</td>
+              <td style="padding: 8px 8px; text-align: center;">—</td>
+              <td style="padding: 8px 8px; text-align: right; font-size: 12px; color: #000000;">${window.noirData.formatMoney(order.amount)}</td>
+              <td style="padding: 8px 8px; text-align: right; color: #059669;">${window.noirData.formatMoney(order.salonMargin)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Итоговый кассовый блок -->
+      <div style="background: #F3F4F6; border: 2px solid #111827; border-radius: 6px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+        <div>
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #111827; letter-spacing: 0.5px;">СУММА К ВЫДАЧЕ НА РУКИ:</div>
+          <div style="font-size: 11px; color: #4B5563; margin-top: 3px;">
+            Способ выдачи: <strong>${order.paymentMethod || 'Наличные из кассы'}</strong> • Примечание: ${order.notes || 'Выплата произведена полностью'}
+          </div>
+        </div>
+        <div style="font-size: 26px; font-weight: 900; color: #000000; letter-spacing: 0.5px;">
+          ${window.noirData.formatMoney(order.amount)}
+        </div>
+      </div>
+
+      <!-- Юридический блок подписей -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding-top: 14px; border-top: 1px dashed #D1D5DB;">
+        <div style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 16px;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #111827; margin-bottom: 4px;">Выплату из кассы произвёл:</div>
+          <div style="font-size: 12px; color: #4B5563;">Администратор / Управляющий: <strong>${order.issuedBy || 'Владелец NOIR Atelier'}</strong></div>
+          <div style="margin-top: 34px; border-top: 1px solid #111827; padding-top: 4px; display: flex; justify-content: space-between; font-size: 10px; color: #6B7280;">
+            <span>(подпись)</span>
+            <span>(М.П. / дата)</span>
+          </div>
+        </div>
+
+        <div style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 16px;">
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #111827; margin-bottom: 4px;">Сумму получил в полном объёме:</div>
+          <div style="font-size: 11px; color: #4B5563; line-height: 1.35;">
+            Мастер: <strong>${order.specialistName}</strong><br>
+            <em>«С расчётом ознакомлен и согласен, денежные средства в сумме ${window.noirData.formatMoney(order.amount)} получил полностью, претензий к ателье не имею»</em>
+          </div>
+          <div style="margin-top: 18px; border-top: 1px solid #111827; padding-top: 4px; display: flex; justify-content: space-between; font-size: 10px; color: #6B7280;">
+            <span>(личная подпись мастера)</span>
+            <span>(дата: ${order.dateFormatted})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.print();
+};
+
+// ==========================================
+// 6.4 ПЕЧАТЬ СВОДНОЙ ВЕДОМОСТИ НА САЛОН (А4)
+// ==========================================
+window.printWeeklyPayrollSummary = function(startDate, endDate) {
+  const dateRange = getPayrollDateRange();
+  const start = startDate || dateRange.startDate;
+  const end = endDate || dateRange.endDate;
+
+  const payrollData = window.noirData.calculatePayroll({
+    startDate: start,
+    endDate: end,
+    includeConfirmed: payrollIncludeConfirmed
+  });
+
+  const printArea = document.getElementById('printableDocumentArea');
+  if (!printArea) return;
+
+  const salon = window.noirData.getSalonInfo();
+  const now = new Date();
+  const printDateStr = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  const printTimeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+  let rowsHtml = '';
+  payrollData.specialists.forEach((sp, idx) => {
+    const paidOrder = window.noirData.getPayoutOrderForPeriod(sp.specialistId, start, end);
+    const isPaid = !!paidOrder;
+
+    rowsHtml += `
+      <tr style="border-bottom: 1px solid #E5E7EB;">
+        <td style="padding: 8px; text-align: center; color: #6B7280;">${idx + 1}</td>
+        <td style="padding: 8px; font-weight: 800; color: #000000;">${sp.specialistName}</td>
+        <td style="padding: 8px; color: #4B5563; font-size: 11px;">${sp.specialistRole}</td>
+        <td style="padding: 8px; text-align: center; font-weight: 700;">${sp.commissionPercent}%</td>
+        <td style="padding: 8px; text-align: center; font-weight: 700;">${sp.totalServicesCount}</td>
+        <td style="padding: 8px; text-align: right; font-weight: 600;">${window.noirData.formatMoney(sp.grossRevenue)}</td>
+        <td style="padding: 8px; text-align: right; color: #059669; font-weight: 700;">${window.noirData.formatMoney(sp.salonMargin)}</td>
+        <td style="padding: 8px; text-align: right; font-weight: 900; font-size: 13px; color: #000000;">${window.noirData.formatMoney(sp.masterPayroll)}</td>
+        <td style="padding: 8px; text-align: center;">
+          ${isPaid ? `
+            <span style="display: inline-block; background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;">
+              ✓ Выплачено (#${paidOrder.id})
+            </span>
+          ` : `
+            <span style="color: #9CA3AF; font-size: 11px;">К начислению</span>
+          `}
+        </td>
+        <td style="padding: 8px; border-bottom: 1px solid #D1D5DB; width: 140px; text-align: center;">
+          ${isPaid ? `
+            <span style="font-size: 10px; color: #059669; font-weight: 700;">Подписано в ордере</span>
+          ` : `
+            <div style="border-bottom: 1px solid #9CA3AF; margin-top: 14px;"></div>
+          `}
+        </td>
+      </tr>
+    `;
+  });
+
+  printArea.innerHTML = `
+    <div style="padding: 24px 32px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #111827; background: #FFFFFF; line-height: 1.45;">
+      <!-- Шапка ведомости -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111827; padding-bottom: 16px; margin-bottom: 20px;">
+        <div>
+          <h1 style="font-size: 24px; font-weight: 900; letter-spacing: 1.5px; margin: 0; color: #000000;">NOIR HAIR ATELIER</h1>
+          <p style="font-size: 12px; color: #4B5563; margin: 4px 0 0;">Сводная зарплатная ведомость мастеров и специалистов ателье</p>
+          <p style="font-size: 11px; color: #6B7280; margin: 2px 0 0;">📍 ${salon.address || '48 An Thuong 2, Da Nang'} • 📞 ${salon.phone || '+84 90 123 4567'}</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="display: inline-block; background: #F3F4F6; border: 1px solid #D1D5DB; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase;">
+            Сводный реестр выплат
+          </div>
+          <div style="font-size: 14px; font-weight: 800; margin-top: 6px; color: #111827;">Период: ${dateRange.label}</div>
+          <p style="font-size: 11px; color: #6B7280; margin: 2px 0 0;">Сформировано: ${printDateStr} в ${printTimeStr}</p>
+        </div>
+      </div>
+
+      <!-- Таблица мастеров -->
+      <div style="margin-bottom: 22px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+          <thead>
+            <tr style="background: #F3F4F6; border-top: 1px solid #D1D5DB; border-bottom: 1px solid #D1D5DB; color: #374151;">
+              <th style="padding: 8px; width: 28px; text-align: center;">№</th>
+              <th style="padding: 8px;">Специалист</th>
+              <th style="padding: 8px;">Должность</th>
+              <th style="padding: 8px; text-align: center;">Ставка</th>
+              <th style="padding: 8px; text-align: center;">Услуг</th>
+              <th style="padding: 8px; text-align: right;">Касса мастера</th>
+              <th style="padding: 8px; text-align: right;">Доход салона</th>
+              <th style="padding: 8px; text-align: right;">К выплате</th>
+              <th style="padding: 8px; text-align: center;">Статус ордера</th>
+              <th style="padding: 8px; text-align: center;">Подпись в получении</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background: #F9FAFB; border-top: 2px solid #111827; font-weight: 800; font-size: 12px;">
+              <td colspan="4" style="padding: 10px 8px; text-align: right;">ИТОГО ПО САЛОНУ:</td>
+              <td style="padding: 10px 8px; text-align: center;">${payrollData.summary.totalServicesCount}</td>
+              <td style="padding: 10px 8px; text-align: right;">${window.noirData.formatMoney(payrollData.summary.totalRevenue)}</td>
+              <td style="padding: 10px 8px; text-align: right; color: #059669;">${window.noirData.formatMoney(payrollData.summary.salonMargin)}</td>
+              <td style="padding: 10px 8px; text-align: right; font-size: 14px; color: #000000;">${window.noirData.formatMoney(payrollData.summary.totalPayroll)}</td>
+              <td colspan="2" style="padding: 10px 8px;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Сводка и финансовый итог -->
+      <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 18px; margin-bottom: 26px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 12px; color: #4B5563;">
+          Общий фонд начисленной заработной платы за период составляет: <strong style="color: #000000;">${window.noirData.formatMoney(payrollData.summary.totalPayroll)}</strong><br>
+          Чистый доход ателье после выплат мастерам: <strong style="color: #059669;">${window.noirData.formatMoney(payrollData.summary.salonMargin)}</strong>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #6B7280; text-transform: uppercase; font-weight: 700;">Фонд оплаты труда:</div>
+          <div style="font-size: 22px; font-weight: 900; color: #111827;">${window.noirData.formatMoney(payrollData.summary.totalPayroll)}</div>
+        </div>
+      </div>
+
+      <!-- Подписи руководства -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 36px; padding-top: 16px; border-top: 1px dashed #D1D5DB;">
+        <div>
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #374151;">Сводную ведомость составил:</div>
+          <div style="font-size: 12px; color: #4B5563; margin-top: 2px;">Главный администратор NOIR Atelier</div>
+          <div style="margin-top: 32px; border-top: 1px solid #111827; padding-top: 4px; display: flex; justify-content: space-between; font-size: 10px; color: #6B7280;">
+            <span>(подпись)</span>
+            <span>(Ф.И.О.)</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #374151;">Выплату зарплатного фонда утвердил:</div>
+          <div style="font-size: 12px; color: #4B5563; margin-top: 2px;">Управляющий / Владелец ателье</div>
+          <div style="margin-top: 32px; border-top: 1px solid #111827; padding-top: 4px; display: flex; justify-content: space-between; font-size: 10px; color: #6B7280;">
+            <span>(подпись)</span>
+            <span>(М.П. / дата)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.print();
+};
+
 
 
