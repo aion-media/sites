@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRIME Space CRM | Панель управления пространством</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+</head>
+<body class="admin-body">
+
+  <!-- PIN Protection Overlay -->
+  <div id="pinLockScreen" style="position: fixed; inset: 0; z-index: 9999; background: #0F172A; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #1E293B; border: 1px solid #334155; border-radius: 20px; padding: 40px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4);">
+      <div style="font-size: 42px; margin-bottom: 12px;">🌿</div>
+      <h2 style="font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.1em; margin-bottom: 6px;">PRIME CRM</h2>
+      <p style="color: #94A3B8; font-size: 13px; margin-bottom: 24px;">Введите PIN-код администратора пространства</p>
+      
+      <form id="pinAuthForm">
+        <input type="password" id="pinInput" maxlength="6" placeholder="••••" style="width: 100%; text-align: center; font-size: 32px; letter-spacing: 0.3em; padding: 12px; border-radius: 12px; border: 1px solid #475569; background: #0F172A; color: #FFFFFF; outline: none; margin-bottom: 16px;">
+        <div id="pinErrorMsg" style="color: #EF4444; font-size: 13px; margin-bottom: 12px; display: none;">Неверный PIN-код</div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px;">Войти в панель</button>
+      </form>
+      <div style="font-size: 11px; color: #64748B; margin-top: 16px;">PIN по умолчанию: 1234</div>
+    </div>
+  </div>
+
+  <!-- Admin Main Layout -->
+  <div class="admin-layout" id="adminMainLayout" style="display: none;">
+    
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div>
+        <div class="admin-brand">
+          <h2>PRIME</h2>
+          <span>Space Management</span>
+        </div>
+
+        <nav class="admin-nav">
+          <div class="admin-nav-item active" data-tab="matrix">
+            <span>📅</span> Шахматка расписания
+          </div>
+          <div class="admin-nav-item" data-tab="journal">
+            <span>📋</span> Журнал записей
+          </div>
+          <div class="admin-nav-item" data-tab="masters">
+            <span>👥</span> Мастера и резиденты
+          </div>
+          <a href="index.html" target="_blank" class="admin-nav-item" style="color: #F8FAFC; margin-top: 24px; border: 1px solid rgba(255,255,255,0.15);">
+            <span>↗</span> Открыть клиентский сайт
+          </a>
+        </nav>
+      </div>
+
+      <div style="font-size: 12px; color: #64748B; border-top: 1px solid #334155; padding-top: 20px;">
+        <div>PRIME Space • 4 этажа</div>
+        <div style="margin-top: 4px;">Центр развития семьи и экспертов</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      
+      <!-- Top Action Bar -->
+      <div class="admin-header">
+        <div>
+          <h1 style="font-size: 28px; font-weight: 800;">Панель управления пространством</h1>
+          <p style="font-size: 14px; color: #64748B;">Интерактивная шахматка по 7 залам, учет занятости и списки участников</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button id="openAddLessonBtn" class="btn btn-primary btn-sm">
+            + Добавить занятие в расписание
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Занятий на выбранный день</div>
+          <div class="kpi-value" id="kpiDayLessons">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Записавшихся гостей</div>
+          <div class="kpi-value" id="kpiDayGuests" style="color: var(--accent-emerald);">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Загрузка мест (%)</div>
+          <div class="kpi-value" id="kpiDayOccupancy" style="color: var(--accent-purple);">0%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Ожидаемая выручка за день</div>
+          <div class="kpi-value" id="kpiDayRevenue" style="color: var(--accent-terracotta);">0 ₫</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: ИНТЕРАКТИВНАЯ ШАХМАТКА РАСПИСАНИЯ -->
+      <section class="admin-tab-pane" id="tabPane-matrix">
+        
+        <!-- Селектор дней недели -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="adminDaySelector">
+            <!-- Заполняется js/admin.js -->
+          </div>
+          <div style="font-size: 12px; color: #64748B;">
+            💡 Кликните на карточку занятия, чтобы просмотреть гостей или сменить мастера
+          </div>
+        </div>
+
+        <!-- Шахматка залов и времени -->
+        <div class="matrix-wrapper">
+          <table class="matrix-table">
+            <thead id="matrixHead">
+              <!-- Заполняется в js/admin.js -->
+            </thead>
+            <tbody id="matrixBody">
+              <!-- Заполняется в js/admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 2: ЖУРНАЛ ВСЕХ ЗАПИСЕЙ -->
+      <section class="admin-tab-pane" id="tabPane-journal" style="display: none;">
+        <div class="matrix-wrapper">
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Общий журнал бронирований клиентов</h3>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Имя гостя</th>
+                <th>Телефон</th>
+                <th>Занятие / Событие</th>
+                <th>День и время</th>
+                <th>Зал и мастер</th>
+                <th>Статус</th>
+              </tr>
+            </thead>
+            <tbody id="journalTableBody">
+              <!-- Заполняется через js/admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: БАЗА МАСТЕРОВ -->
+      <section class="admin-tab-pane" id="tabPane-masters" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Резиденты и преподаватели PRIME Space</h3>
+            <p style="font-size: 13px; color: #64748B;">Штатные тренеры, ведущие мастер-классов и постоянные арендаторы кабинетов</p>
+          </div>
+          <button id="openAddMasterBtn" class="btn btn-primary btn-sm">
+            + Добавить резидента
+          </button>
+        </div>
+        <div class="spaces-grid" id="mastersGrid">
+          <!-- Заполняется через js/admin.js -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- МОДАЛКА УПРАВЛЕНИЯ ЗАНЯТИЕМ И СПИСКОМ ГОСТЕЙ -->
+  <div class="modal-overlay" id="lessonDetailModal">
+    <div class="modal-box" style="max-width: 920px; width: 95vw; padding: 32px 36px; overflow-x: hidden;">
+      <button class="modal-close-btn admin-modal-close">✕</button>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div>
+          <h3 class="modal-title" id="modalLessonTitle" style="color: var(--prime-navy-dark);">Название занятия</h3>
+          <p class="modal-subtitle" id="modalLessonSub" style="margin-bottom: 0;">10:00 – 11:30 • PRIME BODY</p>
+        </div>
+        <div class="guest-count-pill" id="modalParticipantsCount">0 из 12 мест</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; align-items: stretch;">
+        
+        <!-- Колонка 1: Участники и ручная запись (растянута по высоте) -->
+        <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div style="display: flex; flex-direction: column; flex: 1;">
+            <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--prime-navy-dark);">📋 Записавшиеся гости</h4>
+            <div style="min-height: 380px; max-height: 440px; overflow-y: auto; overflow-x: hidden; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 14px; background: #FFFFFF; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+              <table class="participants-table">
+                <thead>
+                  <tr>
+                    <th>Гость</th>
+                    <th>Телефон</th>
+                    <th>Статус</th>
+                    <th style="width: 32px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="modalParticipantsBody">
+                  <!-- Заполняется js/admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Быстрая запись со стойки (внизу вровень с кнопками) -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px;">
+            <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--prime-navy-dark);">+ Записать гостя вручную (со стойки/звонка):</div>
+            <form id="manualGuestForm">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" id="manualGuestName" class="form-input" placeholder="Имя гостя" required style="padding: 9px 12px; font-size: 13px;">
+                <input type="text" id="manualGuestPhone" class="form-input" placeholder="Телефон" required style="padding: 9px 12px; font-size: 13px;">
+              </div>
+              <button type="submit" class="btn btn-sage btn-sm" style="width: 100%; padding: 10px; border-radius: var(--radius-md);">
+                Добавить в группу
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Колонка 2: Редактирование параметров занятия -->
+        <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div>
+            <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--prime-navy-dark);">⚙️ Параметры занятия</h4>
+            
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="form-label">Название активности:</label>
+              <input type="text" id="editLessonTitle" class="form-input" style="padding: 9px 12px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="form-label">Пространство / Зал:</label>
+              <select id="editLessonSpace" class="form-input" style="padding: 9px 12px;">
+                <option value="prime-body">PRIME BODY (Большой зал 4 этаж)</option>
+                <option value="prime-art">PRIME ART (Мастерская 3 этаж)</option>
+                <option value="prime-lab">PRIME LAB (Лаборатория 3D/IT 3 этаж)</option>
+                <option value="prime-mind">PRIME MIND (Зал идей 2 этаж)</option>
+                <option value="prime-coworking">PRIME COWORKING (Коворкинг 2 этаж)</option>
+                <option value="prime-private">PRIME PRIVATE (Кабинет 3 этаж)</option>
+                <option value="prime-balance">PRIME BALANCE (SPA/Тело 3 этаж)</option>
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Время начала:</label>
+                <input type="text" id="editLessonTimeStart" class="form-input" placeholder="10:00" style="padding: 9px 12px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Время окончания:</label>
+                <input type="text" id="editLessonTimeEnd" class="form-input" placeholder="11:30" style="padding: 9px 12px;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="form-label">Ведущий мастер / преподаватель:</label>
+              <select id="editLessonMaster" class="form-input" style="padding: 9px 12px;">
+                <!-- Заполняется динамически -->
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Вместимость мест:</label>
+                <input type="number" id="editLessonMaxSpots" class="form-input" style="padding: 9px 12px;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Стоимость (₫):</label>
+                <input type="number" id="editLessonPrice" class="form-input" step="10000" style="padding: 9px 12px;">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label class="form-label">Возрастная группа:</label>
+              <input type="text" id="editLessonAge" class="form-input" placeholder="Например: 6-12 лет или 18+" style="padding: 9px 12px;">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <button type="button" class="btn btn-primary btn-sm" id="btnSaveLessonEdit" style="flex: 1; padding: 12px;">
+              Сохранить изменения
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnDeleteLesson" style="color: #EF4444; border-color: #FCA5A5; padding: 12px;">
+              Отменить занятие
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА ДОБАВЛЕНИЯ НОВОГО ЗАНЯТИЯ В РАСПИСАНИЕ -->
+  <div class="modal-overlay" id="addLessonModal">
+    <div class="modal-box" style="max-width: 580px;">
+      <button class="modal-close-btn admin-modal-close">✕</button>
+
+      <h3 class="modal-title">+ Новое занятие в расписание</h3>
+      <p class="modal-subtitle">Создание активности в сетке PRIME Space</p>
+
+      <form id="newLessonForm">
+        <div class="form-group">
+          <label class="form-label">День недели:</label>
+          <select id="newLessonDay" class="form-input">
+            <option value="1">Понедельник</option>
+            <option value="2">Вторник</option>
+            <option value="3">Среда</option>
+            <option value="4">Четверг</option>
+            <option value="5" selected>Пятница</option>
+            <option value="6">Суббота</option>
+            <option value="7">Воскресенье</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Название занятия:</label>
+          <input type="text" id="newLessonTitle" class="form-input" placeholder="Например: Хатха-йога и пранаяма" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Пространство:</label>
+          <select id="newLessonSpace" class="form-input">
+            <option value="prime-body">PRIME BODY (Большой зал)</option>
+            <option value="prime-art">PRIME ART (Творческая мастерская)</option>
+            <option value="prime-lab">PRIME LAB (Лаборатория 3D-печати/IT)</option>
+            <option value="prime-mind">PRIME MIND (Зал идей и бизнес-встреч)</option>
+            <option value="prime-coworking">PRIME COWORKING (Коворкинг)</option>
+            <option value="prime-private">PRIME PRIVATE (Кабинет консультаций)</option>
+            <option value="prime-balance">PRIME BALANCE (Кабинет массажа/SPA)</option>
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Время начала:</label>
+            <input type="text" id="newLessonTimeStart" class="form-input" placeholder="10:00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Время окончания:</label>
+            <input type="text" id="newLessonTimeEnd" class="form-input" placeholder="11:30" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Имя ведущего мастера:</label>
+          <input type="text" id="newLessonMaster" class="form-input" placeholder="Например: Анастасия" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Макс. мест в группе:</label>
+            <input type="number" id="newLessonMaxSpots" class="form-input" value="12" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Стоимость (₫):</label>
+            <input type="number" id="newLessonPrice" class="form-input" value="200000" step="10000" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Возраст / Аудитория:</label>
+          <input type="text" id="newLessonAge" class="form-input" placeholder="Например: 18+ или 6-12 лет">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Краткое описание занятия:</label>
+          <textarea id="newLessonDesc" class="form-input" rows="2" placeholder="О чем занятие, что взять с собой"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 15px; margin-top: 10px;">
+          Добавить в расписание ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА РЕДАКТИРОВАНИЯ РЕЗИДЕНТА / МАСТЕРА -->
+  <div class="modal-overlay" id="editMasterModal">
+    <div class="modal-box" style="max-width: 540px;">
+      <button class="modal-close-btn admin-modal-close">✕</button>
+
+      <h3 class="modal-title">Редактирование профиля мастера</h3>
+      <p class="modal-subtitle">Настройка направлений и специализации резидента</p>
+
+      <form id="editMasterForm">
+        <input type="hidden" id="editMasterId">
+
+        <div class="form-group">
+          <label class="form-label">Имя мастера / резидента:</label>
+          <input type="text" id="editMasterName" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Роль / Специализация:</label>
+          <input type="text" id="editMasterRole" class="form-input" placeholder="Например: Инструктор йоги, хореограф" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Направления и залы (где проводит занятия):</label>
+          <div id="editMasterSpacesCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; background: #F8FAFC; padding: 12px; border-radius: 10px; border: 1px solid #E2E8F0;">
+            <!-- Заполняется js/admin.js -->
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            Сохранить изменения
+          </button>
+          <button type="button" class="btn btn-outline" id="btnDeleteMaster" style="color: #EF4444; border-color: #FCA5A5;">
+            Удалить мастера
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА СОЗДАНИЯ НОВОГО РЕЗИДЕНТА -->
+  <div class="modal-overlay" id="addMasterModal">
+    <div class="modal-box" style="max-width: 540px;">
+      <button class="modal-close-btn admin-modal-close">✕</button>
+
+      <h3 class="modal-title">+ Новый резидент / мастер</h3>
+      <p class="modal-subtitle">Добавление преподавателя в базу PRIME Space</p>
+
+      <form id="newMasterForm">
+        <div class="form-group">
+          <label class="form-label">Имя мастера:</label>
+          <input type="text" id="newMasterName" class="form-input" placeholder="Например: Ольга Романова" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Роль / Специализация:</label>
+          <input type="text" id="newMasterRole" class="form-input" placeholder="Например: Психолог, гештальт-терапевт" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Направления и залы:</label>
+          <div id="newMasterSpacesCheckboxes" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; background: #F8FAFC; padding: 12px; border-radius: 10px; border: 1px solid #E2E8F0;">
+            <!-- Заполняется js/admin.js -->
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; margin-top: 16px;">
+          Создать профиль резидента ✨
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
