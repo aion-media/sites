@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       this.bindCategoryFilters();
       this.renderSchedule();
       this.bindModalEvents();
+      this.bindMobileSwitch();
     },
 
     // 1. РЕНДЕРИНГ 9 ПРОСТРАНСТВ
@@ -266,6 +267,16 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             alert(result.error || "Не удалось оформить запись");
           }
+        });
+      }
+    },
+
+    bindMobileSwitch() {
+      const btn = document.getElementById("switchToMobileBtn");
+      if (btn) {
+        btn.addEventListener("click", () => {
+          sessionStorage.setItem("prime_force_mobile", "1");
+          sessionStorage.removeItem("prime_force_desktop");
         });
       }
     }
