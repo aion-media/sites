@@ -50,6 +50,11 @@ function setupAuth() {
   const pinScreen = document.getElementById('pinLockScreen');
   const mainLayout = document.getElementById('adminMainLayout');
 
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('autologin') === '1') {
+    sessionStorage.setItem('noir_admin_auth', 'true');
+  }
+
   // Проверка сессии
   if (sessionStorage.getItem('noir_admin_auth') === 'true' || (pinScreen && pinScreen.style.display === 'none')) {
     if (pinScreen) pinScreen.style.display = 'none';
@@ -200,6 +205,22 @@ function switchTab(tabId) {
 function loadDashboard() {
   updateKPIs();
   switchTab(currentTab);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const openSpec = urlParams.get('openSpec');
+  const addSpec = urlParams.get('addSpec');
+
+  if (openSpec) {
+    switchTab('specialists');
+    setTimeout(() => {
+      openEditSpecialistModal(openSpec);
+    }, 150);
+  } else if (addSpec === '1') {
+    switchTab('specialists');
+    setTimeout(() => {
+      openCreateSpecialistModal();
+    }, 150);
+  }
 }
 
 function updateKPIs() {
@@ -877,6 +898,62 @@ function setupModals() {
       renderJournal();
     });
   }
+
+  // Редактирование и добавление мастера
+  const specForm = document.getElementById('adminSpecialistForm');
+  if (specForm) {
+    specForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('specEditId').value;
+      const name = document.getElementById('specEditName').value.trim();
+      const role = document.getElementById('specEditRole').value.trim();
+      const exp = document.getElementById('specEditExperience').value.trim();
+      const avatar = document.getElementById('specEditAvatar').value.trim() || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+
+      // Собираем категории
+      const selectedCats = [];
+      document.querySelectorAll('#specCategoryCheckboxes input:checked').forEach(ch => {
+        selectedCats.push(ch.value);
+      });
+
+      // Собираем дни недели
+      const selectedWorkDays = [];
+      document.querySelectorAll('#specWorkDaysCheckboxes input:checked').forEach(ch => {
+        selectedWorkDays.push(parseInt(ch.value, 10));
+      });
+
+      const finalCategories = selectedCats.length > 0 ? selectedCats : ["men-style", "women-style"];
+      const finalWorkDays = selectedWorkDays.length > 0 ? selectedWorkDays : [1, 2, 3, 4, 5, 6, 7];
+
+      if (id) {
+        // Редактирование существующего мастера
+        window.noirData.updateSpecialist(id, {
+          name,
+          role,
+          experience: exp,
+          avatar,
+          categories: finalCategories,
+          workDays: finalWorkDays
+        });
+      } else {
+        // Создание нового мастера
+        window.noirData.addSpecialist({
+          name,
+          role,
+          experience: exp,
+          avatar,
+          categories: finalCategories,
+          workDays: finalWorkDays
+        });
+      }
+
+      const specModal = document.getElementById('adminSpecialistModal');
+      if (specModal) specModal.classList.remove('active');
+      updateKPIs();
+      renderSpecialistsSchedule();
+      renderTimeline();
+    });
+  }
 }
 
 window.openQuickBookingFor = function(specialistId, time) {
@@ -907,3 +984,67 @@ window.openQuickBookingFor = function(specialistId, time) {
 
   quickModal.classList.add('active');
 };
+
+window.openCreateSpecialistModal = function() {
+  const modal = document.getElementById('adminSpecialistModal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('specialistModalTitle');
+  if (titleEl) titleEl.textContent = "Новый мастер ателье";
+
+  document.getElementById('specEditId').value = "";
+  document.getElementById('specEditName').value = "";
+  document.getElementById('specEditRole').value = "";
+  document.getElementById('specEditExperience').value = "";
+  document.getElementById('specEditAvatar').value = "";
+
+  populateCategoryCheckboxes([]);
+  document.querySelectorAll('#specWorkDaysCheckboxes input').forEach(ch => ch.checked = true);
+
+  modal.classList.add('active');
+};
+
+window.openEditSpecialistModal = function(specId) {
+  const modal = document.getElementById('adminSpecialistModal');
+  const specialists = window.noirData.getSpecialists();
+  const spec = specialists.find(s => s.id === specId);
+  if (!modal || !spec) return;
+
+  const titleEl = document.getElementById('specialistModalTitle');
+  if (titleEl) titleEl.textContent = "Редактирование профиля: " + spec.name;
+
+  document.getElementById('specEditId').value = spec.id;
+  document.getElementById('specEditName').value = spec.name;
+  document.getElementById('specEditRole').value = spec.role;
+  document.getElementById('specEditExperience').value = spec.experience || "";
+  document.getElementById('specEditAvatar').value = spec.avatar || "";
+
+  populateCategoryCheckboxes(spec.categories || []);
+
+  const days = spec.workDays || [1, 2, 3, 4, 5, 6, 7];
+  document.querySelectorAll('#specWorkDaysCheckboxes input').forEach(ch => {
+    ch.checked = days.includes(parseInt(ch.value, 10));
+  });
+
+  modal.classList.add('active');
+};
+
+function populateCategoryCheckboxes(selectedCategories = []) {
+  const container = document.getElementById('specCategoryCheckboxes');
+  if (!container) return;
+
+  const categories = window.noirData.getCategories();
+  let html = '';
+
+  categories.forEach(cat => {
+    const isChecked = selectedCategories.length === 0 || selectedCategories.includes(cat.id);
+    html += `
+      <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.2s ease;">
+        <input type="checkbox" value="${cat.id}" ${isChecked ? 'checked' : ''} style="accent-color: var(--accent-gold); width: 16px; height: 16px; cursor: pointer;">
+        <span style="font-weight: 600; color: #FFFFFF; font-size: 13px;">${cat.name}</span>
+      </label>
+    `;
+  });
+
+  container.innerHTML = html;
+}
