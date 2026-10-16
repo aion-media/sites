@@ -264,7 +264,7 @@ function setupServiceModal() {
           <button class="modal-close-btn" id="modalDetailClose">&times;</button>
         </div>
         <div class="modal-body" id="modalDetailBody"></div>
-        <div style="padding: 20px 28px; border-top: 1px solid var(--border-subtle); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center;">
+        <div class="modal-detail-footer">
           <div id="modalDetailPriceBox"></div>
           <button class="btn btn-primary" id="modalDetailBookBtn">Записаться на процедуру ✨</button>
         </div>
