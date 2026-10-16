@@ -1271,13 +1271,17 @@ class NoirDataService {
       return false;
     });
 
-    let totalRevenue = 0;
     let totalPayroll = 0;
-    let totalServicesCount = periodApps.length;
+    const totalServicesCount = periodApps.length;
+    const totalRevenue = periodApps.reduce((acc, a) => acc + (a.price || 0), 0);
+
+    const claimedAppIds = new Set();
 
     const masterStats = specialists.map(sp => {
       const spApps = periodApps.filter(a => {
-        return a.specialistId === sp.id || (a.specialistName && a.specialistName.includes(sp.name));
+        const matches = a.specialistId === sp.id || (a.specialistName && (a.specialistName === sp.name || a.specialistName.includes(sp.name)));
+        if (matches) claimedAppIds.add(a.id);
+        return matches;
       });
 
       let masterRevenue = 0;
@@ -1303,7 +1307,6 @@ class NoirDataService {
         };
       });
 
-      totalRevenue += masterRevenue;
       totalPayroll += masterEarned;
 
       return {
@@ -1316,6 +1319,44 @@ class NoirDataService {
         services: detailedServices
       };
     });
+
+    // Если есть записи без назначенного мастера (например, specialistId === 'any')
+    const unassignedApps = periodApps.filter(a => !claimedAppIds.has(a.id));
+    if (unassignedApps.length > 0) {
+      const unassignedRevenue = unassignedApps.reduce((acc, a) => acc + (a.price || 0), 0);
+      const defaultRate = 40;
+      const unassignedEarned = Math.round(unassignedRevenue * defaultRate / 100);
+      totalPayroll += unassignedEarned;
+
+      masterStats.push({
+        specialist: {
+          id: 'unassigned',
+          name: 'Дежурный мастер (Не назначен)',
+          role: 'Записи без прямого назначения мастера',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+          commissionPercent: defaultRate
+        },
+        servicesCount: unassignedApps.length,
+        revenue: unassignedRevenue,
+        commissionPercent: defaultRate,
+        earned: unassignedEarned,
+        salonShare: unassignedRevenue - unassignedEarned,
+        services: unassignedApps.map(a => ({
+          id: a.id,
+          date: a.date,
+          time: a.time,
+          clientName: a.clientName || 'Гость',
+          phone: a.phone || '',
+          serviceName: a.serviceName || 'Услуга',
+          price: a.price || 0,
+          commissionPercent: defaultRate,
+          masterShare: Math.round((a.price || 0) * defaultRate / 100),
+          status: a.status
+        }))
+      });
+    }
+
+    const salonMargin = totalRevenue - totalPayroll;
 
     return {
       startDate,
