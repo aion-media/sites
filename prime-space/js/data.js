@@ -12,7 +12,8 @@ const PRIME_INFO = {
   city: "Нячанг, Вьетнам",
   address: "Центр, PRIME Space Building (4 этажа)",
   phone: "+84 912 345 678",
-  telegram: "https://t.me/prime_space_nhatrang",
+  telegram: "https://t.me/PrimeSpaceVn",
+  telegramHandle: "@PrimeSpaceVn",
   instagram: "https://instagram.com/primespace.vn",
   hours: "Ежедневно 08:30 – 21:30",
   principles: [
